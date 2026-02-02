@@ -1,0 +1,46 @@
+export interface Task {
+  id: number;
+  title: string;
+  description: string | null;
+  isCompleted: boolean;
+  createdAt: string;
+  dueDate: string | null;
+  priority: 0 | 1 | 2; // Low, Medium, High
+  completedAt: string | null;
+}
+
+export interface CreateTaskDto {
+  title: string;
+  description?: string;
+  dueDate?: string;
+  priority: 0 | 1 | 2;
+}
+
+export interface UpdateTaskDto {
+  title: string;
+  description?: string;
+  dueDate?: string;
+  priority: 0 | 1 | 2;
+}
+
+export interface TaskStats {
+  total: number;
+  completed: number;
+  active: number;
+  highPriority: number;
+}
+
+export type TaskPriority = 0 | 1 | 2;
+
+export const PRIORITY_LABELS: Record<TaskPriority, string> = {
+  0: 'Low',
+  1: 'Medium',
+  2: 'High',
+};
+
+export const PRIORITY_COLORS: Record<TaskPriority, string> = {
+  0: 'gray',
+  1: 'blue',
+  2: 'red',
+};
+
