@@ -5,6 +5,7 @@ import { TaskList } from './TaskList';
 import { TaskStats } from './TaskStats';
 import { TodoStateList } from './TodoStateList';
 import { UserManagementList } from './UserManagementList';
+import { OrganizationSettings } from './OrganizationSettings';
 import { UserMenu } from './UserMenu';
 import { Settings } from './Settings';
 import { DevConsole } from './DevConsole';
@@ -13,7 +14,7 @@ export const Dashboard = () => {
   const { user } = useAuth();
   const { t } = useI18n();
   const isAdmin = user?.role === 'Admin';
-  const [activeTab, setActiveTab] = useState<'tasks' | 'users' | 'states'>('tasks');
+  const [activeTab, setActiveTab] = useState<'tasks' | 'users' | 'states' | 'organization'>('tasks');
   const [showStatsSettings, setShowStatsSettings] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
 
@@ -26,6 +27,11 @@ export const Dashboard = () => {
             <p className="text-gray-600 dark:text-gray-400">
               {t('app.welcome')}, {user?.firstName} {user?.lastName}
             </p>
+            {user?.organizationName && (
+              <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">
+                🏢 {user.organizationName}
+              </p>
+            )}
           </div>
           <UserMenu 
             onConfigureStats={() => setShowStatsSettings(true)}
@@ -75,6 +81,16 @@ export const Dashboard = () => {
                 >
                   {t('nav.todoStates')}
                 </button>
+                <button
+                  onClick={() => setActiveTab('organization')}
+                  className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                    activeTab === 'organization'
+                      ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                      : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
+                  }`}
+                >
+                  Organization
+                </button>
               </>
             )}
           </nav>
@@ -88,8 +104,10 @@ export const Dashboard = () => {
           </>
         ) : activeTab === 'users' ? (
           <UserManagementList />
-        ) : (
+        ) : activeTab === 'states' ? (
           <TodoStateList />
+        ) : (
+          <OrganizationSettings />
         )}
 
         {/* Dev Console (only shows if dev testing is enabled) */}

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useI18n } from '../contexts/I18nContext';
+import { useAuth } from '../contexts/AuthContext';
 import { userPreferencesApi } from '../services/userPreferencesApi';
 import { ErrorMessage } from './ErrorMessage';
 import { LoadingSpinner } from './LoadingSpinner';
@@ -12,6 +13,7 @@ interface SettingsProps {
 export const Settings = ({ onClose }: SettingsProps) => {
   const { theme, setTheme } = useTheme();
   const { language, setLanguage, availableLanguages, t } = useI18n();
+  const { user } = useAuth();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -59,6 +61,19 @@ export const Settings = ({ onClose }: SettingsProps) => {
       {error && <ErrorMessage message={error} />}
 
       <div className="space-y-6">
+        {/* Organization Info */}
+        {user?.organizationName && (
+          <div className="pb-4 border-b border-gray-200 dark:border-gray-700">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Organization
+            </label>
+            <div className="flex items-center gap-2 text-gray-900 dark:text-white">
+              <span className="text-lg">🏢</span>
+              <span className="font-medium">{user.organizationName}</span>
+            </div>
+          </div>
+        )}
+
         {/* Theme Selection */}
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
