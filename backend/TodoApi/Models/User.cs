@@ -16,6 +16,7 @@ public class User
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
     public DateTime? LastLoginAt { get; set; }
+    public string? Preferences { get; set; } // JSON string for user preferences
 
     // Navigation properties
     public Organization Organization { get; set; } = null!;

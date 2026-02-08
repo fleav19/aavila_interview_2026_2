@@ -14,6 +14,8 @@ public class CreateTaskDto
     public DateTime? DueDate { get; set; }
 
     public TaskPriorityDto Priority { get; set; } = TaskPriorityDto.Medium;
+
+    public int? TodoStateId { get; set; } // Optional - will use default state if not provided
 }
 
 public enum TaskPriorityDto

@@ -34,13 +34,14 @@ public class TasksController : ControllerBase
     public async Task<ActionResult<IEnumerable<TaskDto>>> GetTasks(
         [FromQuery] string? filter = null,
         [FromQuery] string? sortBy = null,
-        [FromQuery] bool? isCompleted = null)
+        [FromQuery] bool? isCompleted = null,
+        [FromQuery] int? todoStateId = null)
     {
         var organizationId = _userContext.GetCurrentOrganizationId();
         var userId = _userContext.GetCurrentUserId();
         var userRole = _userContext.GetCurrentUserRole();
 
-        var tasks = await _taskService.GetAllTasksAsync(filter, sortBy, isCompleted, organizationId, userId, userRole);
+        var tasks = await _taskService.GetAllTasksAsync(filter, sortBy, isCompleted, todoStateId, organizationId, userId, userRole);
         return Ok(tasks);
     }
 

@@ -37,20 +37,28 @@ public class UsersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<UserDto>> GetCurrentUser()
     {
+        _logger.LogInformation("GetCurrentUser endpoint called. User authenticated: {IsAuthenticated}, Claims count: {ClaimCount}", 
+            User.Identity?.IsAuthenticated ?? false, User.Claims.Count());
+        
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value 
             ?? User.FindFirst("UserId")?.Value;
 
+        _logger.LogInformation("UserId claim value: {UserIdClaim}", userIdClaim ?? "null");
+
         if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out var userId))
         {
+            _logger.LogWarning("Invalid or missing userId claim");
             return Unauthorized(new { message = "Invalid token" });
         }
 
         var user = await _authService.GetUserByIdAsync(userId);
         if (user == null)
         {
+            _logger.LogWarning("User not found for userId: {UserId}", userId);
             return NotFound(new { message = "User not found" });
         }
 
+        _logger.LogInformation("Successfully retrieved user {UserId}", userId);
         return Ok(user);
     }
 

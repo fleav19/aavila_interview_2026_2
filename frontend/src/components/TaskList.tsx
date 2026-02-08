@@ -12,13 +12,14 @@ export const TaskList = () => {
   const [filter, setFilter] = useState('');
   const [sortBy, setSortBy] = useState('created');
   const [isCompleted, setIsCompleted] = useState<boolean | undefined>(undefined);
+  const [todoStateId, setTodoStateId] = useState<number | undefined>(undefined);
   const [showForm, setShowForm] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | undefined>(undefined);
 
   useEffect(() => {
-    fetchTasks(filter || undefined, sortBy, isCompleted);
+    fetchTasks(filter || undefined, sortBy, isCompleted, todoStateId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filter, sortBy, isCompleted]);
+  }, [filter, sortBy, isCompleted, todoStateId]);
 
   const handleEdit = (task: Task) => {
     setEditingTask(task);
@@ -65,9 +66,11 @@ export const TaskList = () => {
             filter={filter}
             sortBy={sortBy}
             isCompleted={isCompleted}
+            todoStateId={todoStateId}
             onFilterChange={setFilter}
             onSortChange={setSortBy}
             onStatusChange={setIsCompleted}
+            onStateChange={setTodoStateId}
           />
 
           {loading && <LoadingSpinner message="Refreshing..." />}

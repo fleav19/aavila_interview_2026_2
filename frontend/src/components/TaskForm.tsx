@@ -1,7 +1,9 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useTasks } from '../contexts/TaskContext';
+import { todoStateApi } from '../services/todoStateApi';
 import type { Task, CreateTaskDto, UpdateTaskDto } from '../types/task';
+import type { TodoState } from '../types/todoState';
 
 interface TaskFormProps {
   task?: Task;
@@ -14,38 +16,61 @@ type FormData = CreateTaskDto;
 export const TaskForm = ({ task, onCancel, onSubmitSuccess }: TaskFormProps) => {
   const { createTask, updateTask } = useTasks();
   const isEditMode = !!task;
+  const [states, setStates] = useState<TodoState[]>([]);
+  const [loadingStates, setLoadingStates] = useState(true);
+
+  // Load todo states
+  useEffect(() => {
+    const loadStates = async () => {
+      try {
+        const data = await todoStateApi.getAll();
+        setStates(data.sort((a, b) => a.order - b.order));
+      } catch (err) {
+        console.error('Failed to load todo states:', err);
+      } finally {
+        setLoadingStates(false);
+      }
+    };
+    loadStates();
+  }, []);
+
+  const defaultState = states.find(s => s.isDefault);
 
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
     reset,
-  } = useForm<FormData>({
+    watch,
+  } = useForm<FormData & { todoStateId?: number }>({
     defaultValues: task
       ? {
           title: task.title,
           description: task.description || '',
           dueDate: task.dueDate ? task.dueDate.split('T')[0] : '',
           priority: task.priority,
+          todoStateId: task.todoStateId,
         }
       : {
           title: '',
           description: '',
           dueDate: '',
           priority: 1,
+          todoStateId: defaultState?.id,
         },
   });
 
   useEffect(() => {
-    if (task) {
+    if (task && states.length > 0) {
       reset({
         title: task.title,
         description: task.description || '',
         dueDate: task.dueDate ? task.dueDate.split('T')[0] : '',
         priority: task.priority,
+        todoStateId: task.todoStateId,
       });
     }
-  }, [task, reset]);
+  }, [task, states, reset]);
 
   const onSubmit = async (data: FormData) => {
     try {
@@ -75,6 +100,14 @@ export const TaskForm = ({ task, onCancel, onSubmitSuccess }: TaskFormProps) => 
       // Only add dueDate if it was successfully parsed
       if (dueDate) {
         taskData.dueDate = dueDate;
+      }
+
+      // Add state if provided (or use default for new tasks)
+      if (data.todoStateId) {
+        taskData.todoStateId = data.todoStateId;
+      } else if (!isEditMode && defaultState) {
+        // For new tasks, use default state if none selected
+        taskData.todoStateId = defaultState.id;
       }
 
       if (isEditMode && task) {
@@ -129,7 +162,29 @@ export const TaskForm = ({ task, onCancel, onSubmitSuccess }: TaskFormProps) => 
           )}
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-3 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              State
+            </label>
+            {loadingStates ? (
+              <div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100">
+                Loading states...
+              </div>
+            ) : (
+              <select
+                {...register('todoStateId', { valueAsNumber: true })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {states.map((state) => (
+                  <option key={state.id} value={state.id}>
+                    {state.displayName}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Due Date

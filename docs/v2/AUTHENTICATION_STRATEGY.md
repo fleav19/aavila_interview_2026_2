@@ -135,13 +135,169 @@ BCrypt verifies against stored hash: ✅ Match
 - If pepper is lost, all passwords become invalid (backup required)
 - Pepper rotation requires password reset for all users (advanced scenario)
 
+## SSO Integration: Enterprise-Grade Security
+
+### What is SSO (Single Sign-On)?
+
+**SSO** allows users to authenticate using external identity providers (IdPs) such as:
+- **OAuth 2.0 / OpenID Connect**: Google, Microsoft Azure AD, Okta, Auth0
+- **SAML 2.0**: Enterprise identity providers
+- **Social Login**: Google, Microsoft, GitHub, etc.
+
+Instead of managing passwords in our application, users authenticate with a trusted third-party provider, and we receive a verified identity token.
+
+### Why SSO is Secure
+
+1. **Password Management Outsourced**: Users don't create passwords in our system
+   - No password storage in our database (eliminates password hash attacks)
+   - Identity provider handles password complexity, rotation, and security
+   - Reduces our attack surface significantly
+
+2. **Enterprise-Grade Security**: Identity providers invest heavily in security
+   - Multi-factor authentication (MFA) support
+   - Advanced threat detection
+   - Compliance with security standards (SOC 2, ISO 27001)
+   - Regular security audits and updates
+
+3. **Centralized Identity Management**: Organizations can manage access centrally
+   - IT departments control user access
+   - Automatic provisioning/deprovisioning
+   - Single point of control for access policies
+   - Audit trails and compliance reporting
+
+4. **Reduced Credential Theft Risk**: No passwords to steal from our application
+   - Even if our database is compromised, no password hashes exist
+   - Attackers would need to compromise the identity provider (much harder)
+   - Users reuse fewer passwords across systems
+
+5. **Better User Experience**: Users sign in with existing credentials
+   - No need to remember another password
+   - Faster onboarding for enterprise users
+   - Reduced password reset requests
+
+### How SSO Complements Current Authentication
+
+**Hybrid Approach** (Recommended):
+- **SSO for Enterprise Users**: Organizations can require SSO for their users
+- **Password Auth for Individual Users**: Personal accounts can still use password-based auth
+- **Both Methods Supported**: Users choose their preferred authentication method
+
+**Flow with SSO**:
+1. User clicks "Sign in with Google" (or other provider)
+2. Redirected to identity provider (Google, Microsoft, etc.)
+3. User authenticates with provider (may include MFA)
+4. Provider redirects back with authorization code
+5. Our backend exchanges code for identity token
+6. We verify token and create/find user account
+7. Generate our JWT token for API access
+8. User is authenticated
+
+### Security Benefits of SSO
+
+✅ **No Password Storage**: Eliminates password hash database entirely for SSO users  
+✅ **MFA Support**: Identity providers often enforce MFA automatically  
+✅ **Reduced Attack Surface**: Fewer authentication endpoints to secure  
+✅ **Compliance**: Easier to meet enterprise security requirements  
+✅ **Audit Trails**: Identity providers maintain detailed access logs  
+✅ **Automatic Security Updates**: Provider handles security patches  
+
+### Implementation Considerations
+
+**OAuth 2.0 / OpenID Connect** (Recommended for most cases):
+- Industry standard protocol
+- Well-supported libraries (Microsoft.AspNetCore.Authentication.Google, etc.)
+- Works with Google, Microsoft, GitHub, and many others
+- Modern, secure, and flexible
+
+**SAML 2.0** (For enterprise):
+- Common in large enterprises
+- More complex but highly secure
+- Supports advanced enterprise features
+- Requires more configuration
+
+**Database Schema Changes**:
+- Add `AuthProvider` field to User model (e.g., "password", "google", "microsoft")
+- Add `ExternalId` field to store provider's user identifier
+- Make `PasswordHash` nullable (not needed for SSO users)
+- Add `LastSsoLoginAt` timestamp
+
+**User Account Linking**:
+- Support linking SSO account to existing password-based account
+- Prevent duplicate accounts (same email, different auth methods)
+- Handle email changes from identity provider
+
+### Trade-offs
+
+**Benefits**:
+- Significantly improved security (no password storage)
+- Better user experience (no password to remember)
+- Enterprise-ready (meets organizational requirements)
+- Reduced support burden (fewer password reset requests)
+- Compliance-friendly (meets security standards)
+
+**Considerations**:
+- **Dependency on Third Party**: If identity provider is down, users can't sign in
+  - Mitigation: Support multiple providers or fallback to password auth
+- **Implementation Complexity**: OAuth flows require careful implementation
+  - Mitigation: Use well-tested libraries and follow security best practices
+- **Provider-Specific Configuration**: Each provider requires setup
+  - Mitigation: Standardize on OAuth 2.0 / OpenID Connect
+- **User Migration**: Existing password users need to link accounts
+  - Mitigation: Allow users to add SSO to existing accounts
+- **Cost**: Some identity providers charge for enterprise features
+  - Mitigation: Many providers offer free tiers for basic SSO
+
+### Recommended Approach
+
+**Phase 1: Add OAuth 2.0 Support** (Google, Microsoft)
+- Most common providers
+- Easy to implement with ASP.NET Core
+- Good user adoption
+
+**Phase 2: Support Multiple Providers**
+- Add GitHub, Okta, Auth0 as needed
+- Standardize on OpenID Connect
+
+**Phase 3: Enterprise Features** (if needed)
+- SAML 2.0 support for large enterprises
+- Just-in-time (JIT) user provisioning
+- Automatic role mapping from identity provider
+
+### Security Best Practices for SSO
+
+1. **Verify Token Signatures**: Always verify tokens from identity provider
+2. **Validate Token Claims**: Check issuer, audience, expiration
+3. **Use HTTPS Only**: All OAuth redirects must use HTTPS
+4. **Secure State Parameter**: Use cryptographically random state for CSRF protection
+5. **Token Storage**: Store refresh tokens securely (encrypted)
+6. **Account Linking**: Verify email matches before linking accounts
+7. **Audit Logging**: Log all SSO authentication events
+
 ## Conclusion
 
-Our current authentication strategy using BCrypt with per-password salting is secure and follows industry best practices. Adding pepper provides an additional layer of defense-in-depth that protects against scenarios where the database is compromised but application configuration remains secure. This enhancement aligns with security best practices for applications handling sensitive user data.
+Our current authentication strategy using BCrypt with per-password salting is secure and follows industry best practices. The planned enhancements create a comprehensive, defense-in-depth authentication system:
+
+1. **Pepper Enhancement**: Adds an additional layer of protection against database compromise scenarios
+2. **SSO Integration**: Provides enterprise-grade security by eliminating password storage for SSO users
+
+Together, these strategies provide multiple layers of security:
+- **Password-based auth** (with pepper): Secure for individual users
+- **SSO auth**: Enterprise-grade security with no password storage
+- **Hybrid approach**: Best of both worlds, supporting different user needs
+
+This multi-layered approach aligns with security best practices for applications handling sensitive user data and positions the application for both individual and enterprise use cases.
 
 ---
 
-**Status**: Planned for implementation  
-**Priority**: Medium (security enhancement)  
-**Impact**: Low code changes, high security value
+**Status**: 
+- Pepper: Planned for implementation
+- SSO: Future consideration (out of scope for MVP)
+
+**Priority**: 
+- Pepper: Medium (security enhancement)
+- SSO: High (enterprise feature, significant security value)
+
+**Impact**: 
+- Pepper: Low code changes, high security value
+- SSO: Medium code changes, very high security and user experience value
 

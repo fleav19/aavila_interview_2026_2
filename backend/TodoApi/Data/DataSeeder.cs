@@ -59,7 +59,6 @@ public static class DataSeeder
                         existingTables.Add(reader.GetString(0));
                     }
                 }
-                await connection.CloseAsync();
                 LogDebug("DataSeeder.cs:54", "Existing tables before EnsureCreatedAsync", new { tables = existingTables.ToArray() }, "A,B,C");
 
                 // Check if all required tables exist
@@ -69,6 +68,29 @@ public static class DataSeeder
                     needsRecreation = true;
                     LogDebug("DataSeeder.cs:60", "Missing required tables detected", new { missingTables = missingTables }, "A,B,C");
                 }
+                else
+                {
+                    // Check if Users table has the Preferences column (schema version check)
+                    if (existingTables.Contains("Users", StringComparer.OrdinalIgnoreCase))
+                    {
+                        var columnsCommand = connection.CreateCommand();
+                        columnsCommand.CommandText = "PRAGMA table_info(Users)";
+                        var columns = new List<string>();
+                        using (var reader = await columnsCommand.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                columns.Add(reader.GetString(1)); // Column name is at index 1
+                            }
+                        }
+                        if (!columns.Contains("Preferences", StringComparer.OrdinalIgnoreCase))
+                        {
+                            needsRecreation = true;
+                            LogDebug("DataSeeder.cs:75", "Users table missing Preferences column, needs recreation", new { existingColumns = columns.ToArray() }, "A,B,C");
+                        }
+                    }
+                }
+                await connection.CloseAsync();
             }
             catch (Exception ex)
             {

@@ -2,7 +2,11 @@ export interface Task {
   id: number;
   title: string;
   description: string | null;
-  isCompleted: boolean;
+  isCompleted: boolean; // Kept for backward compatibility
+  todoStateId: number;
+  todoStateName: string;
+  todoStateDisplayName: string;
+  todoStateColor?: string;
   createdAt: string;
   dueDate: string | null;
   priority: 0 | 1 | 2; // Low, Medium, High
@@ -14,6 +18,7 @@ export interface CreateTaskDto {
   description?: string;
   dueDate?: string;
   priority: 0 | 1 | 2;
+  todoStateId?: number;
 }
 
 export interface UpdateTaskDto {
@@ -21,6 +26,7 @@ export interface UpdateTaskDto {
   description?: string;
   dueDate?: string;
   priority: 0 | 1 | 2;
+  todoStateId?: number;
 }
 
 export interface TaskStats {
@@ -28,6 +34,7 @@ export interface TaskStats {
   completed: number;
   active: number;
   highPriority: number;
+  stateCounts?: Record<string, number>;
 }
 
 export type TaskPriority = 0 | 1 | 2;

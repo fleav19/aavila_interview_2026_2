@@ -16,7 +16,7 @@ public class TaskService : ITaskService
         _logger = logger;
     }
 
-    public async Task<IEnumerable<TaskDto>> GetAllTasksAsync(string? filter, string? sortBy, bool? isCompleted, int? organizationId, int? userId, string? userRole)
+    public async Task<IEnumerable<TaskDto>> GetAllTasksAsync(string? filter, string? sortBy, bool? isCompleted, int? todoStateId, int? organizationId, int? userId, string? userRole)
     {
         if (organizationId == null)
         {
@@ -36,8 +36,13 @@ public class TaskService : ITaskService
         }
         // Admins and Viewers see all organization tasks
 
-        // Filter by completion status (check if state name is "done")
-        if (isCompleted.HasValue)
+        // Filter by todo state ID (takes precedence over isCompleted)
+        if (todoStateId.HasValue)
+        {
+            query = query.Where(t => t.TodoStateId == todoStateId.Value);
+        }
+        // Filter by completion status (check if state name is "done") - only if todoStateId not provided
+        else if (isCompleted.HasValue)
         {
             if (isCompleted.Value)
             {
@@ -94,9 +99,26 @@ public class TaskService : ITaskService
 
     public async Task<TaskDto> CreateTaskAsync(CreateTaskDto createTaskDto, int userId, int organizationId)
     {
-        // Get default state for the organization
-        var defaultState = await _context.TodoStates
-            .FirstAsync(s => s.IsDefault && s.OrganizationId == organizationId && !s.IsDeleted);
+        // Get state - use provided state or default state
+        TodoState state;
+        if (createTaskDto.TodoStateId.HasValue)
+        {
+            state = await _context.TodoStates
+                .FirstOrDefaultAsync(s => s.Id == createTaskDto.TodoStateId.Value 
+                    && s.OrganizationId == organizationId 
+                    && !s.IsDeleted);
+            
+            if (state == null)
+            {
+                throw new InvalidOperationException($"Todo state with ID {createTaskDto.TodoStateId.Value} not found or not accessible");
+            }
+        }
+        else
+        {
+            // Use default state
+            state = await _context.TodoStates
+                .FirstAsync(s => s.IsDefault && s.OrganizationId == organizationId && !s.IsDeleted);
+        }
 
         var task = new Models.Task
         {
@@ -104,7 +126,7 @@ public class TaskService : ITaskService
             Description = createTaskDto.Description,
             DueDate = createTaskDto.DueDate,
             Priority = (TaskPriority)createTaskDto.Priority,
-            TodoStateId = defaultState.Id,
+            TodoStateId = state.Id,
             CreatedById = userId,
             OrganizationId = organizationId,
             CreatedAt = DateTime.UtcNow,
@@ -116,7 +138,7 @@ public class TaskService : ITaskService
 
         await _context.Entry(task).Reference(t => t.TodoState).LoadAsync();
 
-        _logger.LogInformation("Created task with ID {TaskId} by user {UserId}", task.Id, userId);
+        _logger.LogInformation("Created task with ID {TaskId} by user {UserId} with state {StateName}", task.Id, userId, state.Name);
         return MapToDto(task);
     }
 
@@ -146,10 +168,40 @@ public class TaskService : ITaskService
         task.Description = updateTaskDto.Description;
         task.DueDate = updateTaskDto.DueDate;
         task.Priority = (TaskPriority)updateTaskDto.Priority;
+        
+        // Update state if provided
+        if (updateTaskDto.TodoStateId.HasValue)
+        {
+            var newState = await _context.TodoStates
+                .FirstOrDefaultAsync(s => s.Id == updateTaskDto.TodoStateId.Value 
+                    && s.OrganizationId == organizationId.Value 
+                    && !s.IsDeleted);
+            
+            if (newState == null)
+            {
+                throw new InvalidOperationException($"Todo state with ID {updateTaskDto.TodoStateId.Value} not found or not accessible");
+            }
+
+            task.TodoStateId = newState.Id;
+            
+            // Update CompletedAt based on state name
+            if (newState.Name.ToLower() == "done")
+            {
+                task.CompletedAt = DateTime.UtcNow;
+            }
+            else if (task.CompletedAt.HasValue && newState.Name.ToLower() != "done")
+            {
+                task.CompletedAt = null;
+            }
+        }
+        
         task.UpdatedAt = DateTime.UtcNow;
         task.UpdatedById = userId;
 
         await _context.SaveChangesAsync();
+        
+        // Reload state for DTO mapping
+        await _context.Entry(task).Reference(t => t.TodoState).LoadAsync();
 
         _logger.LogInformation("Updated task with ID {TaskId} by user {UserId}", id, userId);
         return MapToDto(task);
@@ -244,12 +296,22 @@ public class TaskService : ITaskService
             .ToListAsync();
         
         var doneStateName = "done";
+        
+        // Calculate state counts
+        var stateCounts = tasks
+            .GroupBy(t => t.TodoState)
+            .ToDictionary(
+                g => g.Key.DisplayName,
+                g => g.Count()
+            );
+        
         return new TaskStatsDto
         {
             Total = tasks.Count,
             Completed = tasks.Count(t => t.TodoState.Name.ToLower() == doneStateName),
             Active = tasks.Count(t => t.TodoState.Name.ToLower() != doneStateName),
-            HighPriority = tasks.Count(t => t.Priority == TaskPriority.High && t.TodoState.Name.ToLower() != doneStateName)
+            HighPriority = tasks.Count(t => t.Priority == TaskPriority.High && t.TodoState.Name.ToLower() != doneStateName),
+            StateCounts = stateCounts
         };
     }
 
@@ -263,6 +325,10 @@ public class TaskService : ITaskService
             Title = task.Title,
             Description = task.Description,
             IsCompleted = isCompleted,
+            TodoStateId = task.TodoStateId,
+            TodoStateName = task.TodoState?.Name ?? "unknown",
+            TodoStateDisplayName = task.TodoState?.DisplayName ?? "Unknown",
+            TodoStateColor = task.TodoState?.Color,
             CreatedAt = task.CreatedAt,
             DueDate = task.DueDate,
             Priority = (TaskPriorityDto)task.Priority,

@@ -5,7 +5,11 @@ public class TaskDto
     public int Id { get; set; }
     public string Title { get; set; } = string.Empty;
     public string? Description { get; set; }
-    public bool IsCompleted { get; set; }
+    public bool IsCompleted { get; set; } // Kept for backward compatibility
+    public int TodoStateId { get; set; }
+    public string TodoStateName { get; set; } = string.Empty;
+    public string TodoStateDisplayName { get; set; } = string.Empty;
+    public string? TodoStateColor { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? DueDate { get; set; }
     public TaskPriorityDto Priority { get; set; }

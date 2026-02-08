@@ -7,7 +7,7 @@ interface TaskContextType {
   stats: TaskStats | null;
   loading: boolean;
   error: string | null;
-  fetchTasks: (filter?: string, sortBy?: string, isCompleted?: boolean) => Promise<void>;
+  fetchTasks: (filter?: string, sortBy?: string, isCompleted?: boolean, todoStateId?: number) => Promise<void>;
   createTask: (task: CreateTaskDto) => Promise<void>;
   updateTask: (id: number, task: UpdateTaskDto) => Promise<void>;
   toggleTask: (id: number) => Promise<void>;
@@ -35,11 +35,11 @@ export const TaskProvider = ({ children }: TaskProviderProps) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchTasks = async (filter?: string, sortBy?: string, isCompleted?: boolean) => {
+  const fetchTasks = async (filter?: string, sortBy?: string, isCompleted?: boolean, todoStateId?: number) => {
     try {
       setLoading(true);
       setError(null);
-      const data = await taskApi.getAll({ filter, sortBy, isCompleted });
+      const data = await taskApi.getAll({ filter, sortBy, isCompleted, todoStateId });
       setTasks(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch tasks');

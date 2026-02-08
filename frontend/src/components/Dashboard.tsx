@@ -4,12 +4,14 @@ import { TaskList } from './TaskList';
 import { TaskStats } from './TaskStats';
 import { TodoStateList } from './TodoStateList';
 import { UserManagementList } from './UserManagementList';
+import { UserMenu } from './UserMenu';
 import { DevConsole } from './DevConsole';
 
 export const Dashboard = () => {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const isAdmin = user?.role === 'Admin';
   const [activeTab, setActiveTab] = useState<'tasks' | 'users' | 'states'>('tasks');
+  const [showStatsSettings, setShowStatsSettings] = useState(false);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -18,15 +20,10 @@ export const Dashboard = () => {
           <div>
             <h1 className="text-4xl font-bold text-gray-900 mb-2">Todo App</h1>
             <p className="text-gray-600">
-              Welcome, {user?.firstName} {user?.lastName} ({user?.role})
+              Welcome, {user?.firstName} {user?.lastName}
             </p>
           </div>
-          <button
-            onClick={logout}
-            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-          >
-            Logout
-          </button>
+          <UserMenu onConfigureStats={() => setShowStatsSettings(true)} />
         </header>
 
         {/* Tab Navigation */}
@@ -72,7 +69,7 @@ export const Dashboard = () => {
         {/* Tab Content */}
         {activeTab === 'tasks' ? (
           <>
-            <TaskStats />
+            <TaskStats showSettings={showStatsSettings} onSettingsClose={() => setShowStatsSettings(false)} />
             <TaskList />
           </>
         ) : activeTab === 'users' ? (

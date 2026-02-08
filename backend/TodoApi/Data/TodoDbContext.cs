@@ -54,6 +54,7 @@ public class TodoDbContext : DbContext
             entity.Property(e => e.PasswordHash).IsRequired();
             entity.Property(e => e.FirstName).IsRequired().HasMaxLength(100);
             entity.Property(e => e.LastName).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.Preferences).HasColumnType("TEXT"); // JSON stored as TEXT in SQLite
             entity.HasIndex(e => e.Email).IsUnique();
             entity.HasIndex(e => e.OrganizationId);
             entity.HasIndex(e => e.RoleId);
