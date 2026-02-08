@@ -9,9 +9,10 @@ import type { TodoState } from '../types/todoState';
 interface TaskItemProps {
   task: Task;
   onEdit: (task: Task) => void;
+  onView: (task: Task) => void;
 }
 
-export const TaskItem = ({ task, onEdit }: TaskItemProps) => {
+export const TaskItem = ({ task, onEdit, onView }: TaskItemProps) => {
   const { updateTask, deleteTask } = useTasks();
   const [isDeleting, setIsDeleting] = useState(false);
   const [states, setStates] = useState<TodoState[]>([]);
@@ -64,9 +65,10 @@ export const TaskItem = ({ task, onEdit }: TaskItemProps) => {
 
   return (
     <div
-      className={`bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 shadow-sm transition-all ${
+      className={`bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 shadow-sm transition-all cursor-pointer hover:shadow-md ${
         task.isCompleted ? 'opacity-60' : ''
       } ${isDeleting ? 'opacity-50' : ''}`}
+      onClick={() => onView(task)}
     >
       <div className="flex items-start gap-3">
         <div className="flex-1 min-w-0">
@@ -155,14 +157,20 @@ export const TaskItem = ({ task, onEdit }: TaskItemProps) => {
         </div>
         <div className="flex gap-2">
           <button
-            onClick={() => onEdit(task)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit(task);
+            }}
             className="px-3 py-1 text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
             disabled={isDeleting}
           >
             Edit
           </button>
           <button
-            onClick={handleDelete}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDelete();
+            }}
             className="px-3 py-1 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
             disabled={isDeleting}
           >

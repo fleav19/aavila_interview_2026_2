@@ -5,6 +5,7 @@ import { TaskFilters } from './TaskFilters';
 import { LoadingSpinner } from './LoadingSpinner';
 import { ErrorMessage } from './ErrorMessage';
 import { TaskForm } from './TaskForm';
+import { TaskDetail } from './TaskDetail';
 import type { Task } from '../types/task';
 
 export const TaskList = () => {
@@ -16,6 +17,7 @@ export const TaskList = () => {
   const [assignedToId, setAssignedToId] = useState<number | undefined>(undefined);
   const [showForm, setShowForm] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | undefined>(undefined);
+  const [viewingTaskId, setViewingTaskId] = useState<number | null>(null);
 
   useEffect(() => {
     // Handle special case: -1 means unassigned
@@ -28,6 +30,10 @@ export const TaskList = () => {
   const handleEdit = (task: Task) => {
     setEditingTask(task);
     setShowForm(true);
+  };
+
+  const handleView = (task: Task) => {
+    setViewingTaskId(task.id);
   };
 
   const handleFormSuccess = () => {
@@ -90,11 +96,20 @@ export const TaskList = () => {
           ) : (
             <div className="space-y-3">
               {tasks.map((task) => (
-                <TaskItem key={task.id} task={task} onEdit={handleEdit} />
+                <TaskItem key={task.id} task={task} onEdit={handleEdit} onView={handleView} />
               ))}
             </div>
           )}
         </>
+      )}
+
+      {/* Task Detail Modal */}
+      {viewingTaskId !== null && (
+        <TaskDetail
+          taskId={viewingTaskId}
+          onClose={() => setViewingTaskId(null)}
+          onEdit={handleEdit}
+        />
       )}
     </div>
   );

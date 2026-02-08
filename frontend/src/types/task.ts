@@ -16,6 +16,9 @@ export interface Task {
   assignedToEmail?: string | null;
   createdById: number;
   createdByName: string;
+  updatedAt: string;
+  updatedById?: number | null;
+  updatedByName?: string | null;
 }
 
 export interface CreateTaskDto {

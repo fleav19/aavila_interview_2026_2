@@ -23,5 +23,10 @@ public class TaskDto
     // Creator information
     public int CreatedById { get; set; }
     public string CreatedByName { get; set; } = string.Empty;
+    
+    // Update information
+    public DateTime UpdatedAt { get; set; }
+    public int? UpdatedById { get; set; }
+    public string? UpdatedByName { get; set; }
 }
 

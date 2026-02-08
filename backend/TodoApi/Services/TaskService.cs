@@ -27,6 +27,7 @@ public class TaskService : ITaskService
             .Include(t => t.TodoState)
             .Include(t => t.AssignedTo)
             .Include(t => t.CreatedBy)
+            .Include(t => t.UpdatedBy)
             .Where(t => !t.IsDeleted && t.OrganizationId == organizationId.Value)
             .AsQueryable();
 
@@ -103,6 +104,7 @@ public class TaskService : ITaskService
             .Include(t => t.TodoState)
             .Include(t => t.AssignedTo)
             .Include(t => t.CreatedBy)
+            .Include(t => t.UpdatedBy)
             .FirstOrDefaultAsync(t => t.Id == id && !t.IsDeleted && t.OrganizationId == organizationId.Value);
 
         if (task == null)
@@ -173,6 +175,7 @@ public class TaskService : ITaskService
         await _context.Entry(task).Reference(t => t.TodoState).LoadAsync();
         await _context.Entry(task).Reference(t => t.AssignedTo).LoadAsync();
         await _context.Entry(task).Reference(t => t.CreatedBy).LoadAsync();
+        await _context.Entry(task).Reference(t => t.UpdatedBy).LoadAsync();
 
         _logger.LogInformation("Created task with ID {TaskId} by user {UserId} with state {StateName}", task.Id, userId, state.Name);
         return MapToDto(task);
@@ -189,6 +192,7 @@ public class TaskService : ITaskService
             .Include(t => t.TodoState)
             .Include(t => t.AssignedTo)
             .Include(t => t.CreatedBy)
+            .Include(t => t.UpdatedBy)
             .FirstOrDefaultAsync(t => t.Id == id && !t.IsDeleted && t.OrganizationId == organizationId.Value);
 
         if (task == null)
@@ -264,6 +268,7 @@ public class TaskService : ITaskService
         await _context.Entry(task).Reference(t => t.TodoState).LoadAsync();
         await _context.Entry(task).Reference(t => t.AssignedTo).LoadAsync();
         await _context.Entry(task).Reference(t => t.CreatedBy).LoadAsync();
+        await _context.Entry(task).Reference(t => t.UpdatedBy).LoadAsync();
 
         _logger.LogInformation("Updated task with ID {TaskId} by user {UserId}", id, userId);
         return MapToDto(task);
@@ -280,6 +285,7 @@ public class TaskService : ITaskService
             .Include(t => t.TodoState)
             .Include(t => t.AssignedTo)
             .Include(t => t.CreatedBy)
+            .Include(t => t.UpdatedBy)
             .FirstOrDefaultAsync(t => t.Id == id && !t.IsDeleted && t.OrganizationId == organizationId.Value);
 
         if (task == null)
@@ -394,6 +400,7 @@ public class TaskService : ITaskService
             TodoStateDisplayName = task.TodoState?.DisplayName ?? "Unknown",
             TodoStateColor = task.TodoState?.Color,
             CreatedAt = task.CreatedAt,
+            UpdatedAt = task.UpdatedAt,
             DueDate = task.DueDate,
             Priority = (TaskPriorityDto)task.Priority,
             CompletedAt = task.CompletedAt,
@@ -401,7 +408,9 @@ public class TaskService : ITaskService
             AssignedToName = task.AssignedTo != null ? $"{task.AssignedTo.FirstName} {task.AssignedTo.LastName}" : null,
             AssignedToEmail = task.AssignedTo?.Email,
             CreatedById = task.CreatedById,
-            CreatedByName = task.CreatedBy != null ? $"{task.CreatedBy.FirstName} {task.CreatedBy.LastName}" : "Unknown"
+            CreatedByName = task.CreatedBy != null ? $"{task.CreatedBy.FirstName} {task.CreatedBy.LastName}" : "Unknown",
+            UpdatedById = task.UpdatedById,
+            UpdatedByName = task.UpdatedBy != null ? $"{task.UpdatedBy.FirstName} {task.UpdatedBy.LastName}" : null
         };
     }
 }
