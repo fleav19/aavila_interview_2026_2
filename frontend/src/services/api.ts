@@ -34,6 +34,10 @@ api.interceptors.response.use(
       localStorage.removeItem('todo_user');
       window.location.href = '/';
     }
+    // Log other errors for debugging
+    if (error.response?.status === 403) {
+      console.error('Forbidden (403):', error.response.data);
+    }
     return Promise.reject(error);
   }
 );

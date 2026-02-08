@@ -369,7 +369,7 @@ This document captures user stories organized by role to help identify functiona
 - See when user last logged in
 - Can see user's task statistics (how many tasks created, assigned)
 
-**Status**: ❌ Not Implemented
+**Status**: ✅ Implemented
 
 ---
 
@@ -385,7 +385,7 @@ This document captures user stories organized by role to help identify functiona
 - Cannot change my own role (or requires special permission)
 - Audit trail of role changes
 
-**Status**: ❌ Not Implemented
+**Status**: ✅ Implemented (can change roles, but can change own role - may want to add restriction)
 
 ---
 
@@ -401,7 +401,7 @@ This document captures user stories organized by role to help identify functiona
 - Deactivated users' tasks remain visible
 - Clear indication of user status
 
-**Status**: ❌ Not Implemented
+**Status**: ✅ Implemented
 
 ---
 
@@ -541,7 +541,7 @@ This document captures user stories organized by role to help identify functiona
 - Guest: Landing page, registration, login
 - Viewer: View tasks, filter/search, view stats, read-only enforcement
 - User: Create/edit/delete own tasks, view tasks, filter/search, logout, view profile
-- Admin: All user capabilities, edit/delete any task
+- Admin: All user capabilities, edit/delete any task, user management (view, update roles, activate/deactivate), todo state management (CRUD)
 
 ### ⚠️ Partially Implemented
 - Viewer: Task detail view (no dedicated page)
@@ -551,23 +551,21 @@ This document captures user stories organized by role to help identify functiona
 ### ❌ Not Implemented
 - Viewer: View todo states
 - User: Assign tasks, view assigned tasks, filter by assignee/state
-- Admin: User management (view, roles, activate/deactivate), Todo state management (CRUD), Organization settings, Advanced statistics
+- Admin: Organization settings, Advanced statistics
 
 ---
 
 ## Priority Recommendations
 
 ### High Priority (Core Functionality Gaps)
-1. **Todo State Management** (Admin) - US-ADMIN-005 through US-ADMIN-010
-2. **Task State Selection** (User) - US-USER-005 (full implementation)
-3. **Task Assignment** (User) - US-USER-006, US-USER-007
-4. **View Todo States** (All) - US-VIEWER-005, US-USER-010 (filter by state)
+1. **Task State Selection** (User) - US-USER-005 (full implementation)
+2. **Task Assignment** (User) - US-USER-006, US-USER-007
+3. **View Todo States** (All) - US-VIEWER-005, US-USER-010 (filter by state)
 
 ### Medium Priority (Nice to Have)
-1. **User Management** (Admin) - US-ADMIN-002, US-ADMIN-003, US-ADMIN-004
-2. **Organization Settings** (Admin) - US-ADMIN-012
-3. **Advanced Statistics** (Admin) - US-ADMIN-011
-4. **Task Detail View** (Viewer/User) - US-VIEWER-002
+1. **Organization Settings** (Admin) - US-ADMIN-012
+2. **Advanced Statistics** (Admin) - US-ADMIN-011
+3. **Task Detail View** (Viewer/User) - US-VIEWER-002
 
 ### Low Priority (Polish)
 1. **State Reordering UI** (Admin) - US-ADMIN-009
