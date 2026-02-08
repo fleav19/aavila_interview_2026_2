@@ -7,15 +7,17 @@ This document explicitly defines features, capabilities, and requirements that a
 
 ## 1. Features Explicitly Out of Scope
 
-### 1.1 Subtasks and Task Dependencies
-**What**: Nested tasks, parent-child relationships, task dependencies (blocking tasks)
+### 1.1 Task Dependencies (Blocking Tasks)
+**What**: Task dependencies where one task blocks another, dependency chains, dependency resolution
 **Why Out of Scope**: 
-- Adds significant complexity to data model
 - Requires dependency resolution logic
-- Complex UI for nested hierarchies
+- Complex UI for dependency visualization
+- Circular dependency detection
 - Not required for MVP
 
-**Future Consideration**: Can be added as Phase 2 feature
+**Note**: Basic subtasks (parent-child relationships) are now in scope for MVP. See USER_STORIES.md for details.
+
+**Future Consideration**: Advanced dependency management can be added as Phase 2 feature
 
 ---
 
@@ -155,15 +157,17 @@ This document explicitly defines features, capabilities, and requirements that a
 
 ---
 
-### 1.13 Task Categories/Tags
-**What**: Categorization or tagging system for tasks
+### 1.13 Task Categories/Tags (Beyond Projects)
+**What**: Additional categorization or tagging system beyond projects (e.g., tags, labels, custom fields)
 **Why Out of Scope**:
-- Additional data model
+- Additional data model complexity
 - Many-to-many relationships
 - Tag management UI
-- Not essential for MVP
+- Projects provide sufficient organization for MVP
 
-**Future Consideration**: Can be added easily in Phase 2
+**Note**: Projects (grouping tasks together) are now in scope for MVP. See USER_STORIES.md for details. This section refers to additional tagging/categorization systems beyond projects.
+
+**Future Consideration**: Can be added easily in Phase 2 if needed
 
 ---
 
@@ -252,7 +256,27 @@ This document explicitly defines features, capabilities, and requirements that a
 
 ---
 
-### 2.3 Rate Limiting
+### 2.3 Microservices Architecture
+**What**: Breaking the backend into separate microservices (e.g., Auth Service, Task Service, User Service)
+**Why Out of Scope**:
+- Much more complex architecture for MVP
+- Service-to-service communication overhead
+- Distributed system challenges
+- More infrastructure to manage
+- Overkill for MVP scale
+- Current: Monolith architecture
+
+**Note**: The backend is intentionally kept as a monolith for MVP. While we have ideas about microservices architecture, we will wait for user traffic and real-world usage patterns to confirm the need before making that architectural change. Premature microservices can add unnecessary complexity without clear benefits.
+
+**Future Consideration**: Consider microservices only when:
+- User traffic confirms need for independent scaling
+- Specific services have different scaling requirements
+- Clear service boundaries emerge from usage patterns
+- Performance bottlenecks identified in specific areas
+
+---
+
+### 2.4 Rate Limiting
 **What**: API rate limiting to prevent abuse
 **Why Out of Scope**:
 - Additional middleware
@@ -538,22 +562,32 @@ This document explicitly defines features, capabilities, and requirements that a
 ## Summary
 
 ### In Scope (MVP)
-- ✅ User authentication (JWT) - Planned
-- ✅ Role-based access control (Admin, User, Viewer) - Planned
-- ✅ Multi-tenant organizations - Planned
+- ✅ User authentication (JWT) - ✅ Implemented
+- ✅ Role-based access control (Admin, User, Viewer) - ✅ Implemented
+- ✅ Multi-tenant organizations - ✅ Implemented
 - ✅ Todo CRUD operations - ✅ Implemented
-- ✅ Configurable lifecycle states - Planned
-- ✅ Task assignment - Planned
+- ✅ Configurable lifecycle states - ✅ Implemented
+- ✅ Task assignment - ✅ Implemented
 - ✅ Task priorities and due dates - ✅ Implemented
 - ✅ Task filtering, sorting, search - ✅ Implemented
 - ✅ Basic statistics - ✅ Implemented
 - ✅ REST API - ✅ Implemented
-- ✅ Soft deletion - Planned
-- ✅ Audit trail - Planned
+- ✅ Soft deletion - ✅ Implemented
+- ✅ Audit trail - ✅ Implemented
+- ✅ Task detail view - ✅ Implemented
+- ✅ Organization settings - ✅ Implemented
+- ✅ Dark mode - ✅ Implemented
+- ✅ Internationalization - ✅ Implemented
+- ✅ User preferences - ✅ Implemented
+- ✅ Routing - ✅ Implemented
+- 📋 Projects (grouping tasks) - Planned for MVP
+- 📋 Subtasks (parent-child relationships) - Planned for MVP
 - ⏸️ GraphQL API - Deferred to Phase 2
 
+**Note on MVP Flexibility**: The MVP implementation of Projects and Subtasks provides a solid foundation for task organization. While we could add more advanced features (e.g., nested project hierarchies, complex subtask dependencies, project templates), the current MVP scope balances functionality with implementation complexity. This provides a great starting point that can be extended based on user feedback and needs.
+
 ### Out of Scope (Future)
-- ❌ Subtasks and dependencies
+- ❌ Task dependencies (blocking tasks, dependency chains)
 - ❌ File attachments
 - ❌ Rich text editing
 - ❌ Comments/notes
@@ -575,6 +609,12 @@ This document explicitly defines features, capabilities, and requirements that a
 3. **Complexity**: Some features add significant complexity
 4. **Dependencies**: Some features require external services
 5. **Interview Scope**: Demonstrate core skills, not every possible feature
+
+---
+
+## MVP Flexibility Note
+
+The MVP implementation of **Projects** and **Subtasks** provides a solid foundation for task organization. While we could add more advanced features (e.g., nested project hierarchies, complex subtask dependencies, project templates, multi-level subtask nesting), the current MVP scope balances functionality with implementation complexity. This provides a great starting point that can be extended based on user feedback and needs. The architecture is designed to accommodate future enhancements without major rewrites.
 
 ---
 

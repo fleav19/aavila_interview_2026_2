@@ -458,6 +458,79 @@ This document outlines the key architectural and design trade-offs made in the E
 
 ---
 
+## 15. Architecture: Monolith vs Microservices
+
+### Decision: Monolith (MVP)
+**Rationale**:
+- Simpler to develop and deploy for MVP
+- Single codebase easier to maintain
+- No service-to-service communication complexity
+- Faster development and testing
+- Sufficient for initial user traffic
+- Easier debugging and deployment
+- Lower operational complexity
+
+**Trade-offs**:
+- ✅ **Monolith Pros**:
+  - Simpler architecture
+  - Single deployment unit
+  - Easier local development
+  - No network latency between services
+  - Simpler testing (no service mocking needed)
+  - Easier debugging (single codebase)
+  - Lower infrastructure costs
+  - Faster feature development
+  - Sufficient for MVP scale
+
+- ❌ **Monolith Cons**:
+  - All features scale together (can't scale independently)
+  - Single point of failure
+  - Technology lock-in (one stack)
+  - Harder to scale specific features
+  - Larger codebase as it grows
+  - Deployment affects entire system
+
+**Alternative Considered**: Microservices (better scalability, but more complex)
+
+**Microservices (Future Consideration)**:
+- ✅ **Pros**:
+  - Independent scaling per service
+  - Technology diversity possible
+  - Team autonomy
+  - Fault isolation
+  - Better for large teams
+  - Can optimize each service independently
+
+- ❌ **Cons**:
+  - Much more complex architecture
+  - Service-to-service communication overhead
+  - Distributed system challenges
+  - More infrastructure to manage
+  - Harder debugging across services
+  - Network latency between services
+  - Data consistency challenges
+  - Overkill for MVP
+
+**Migration Strategy**:
+- **Current (MVP)**: Monolith architecture
+- **Future**: Consider microservices only when:
+  - User traffic confirms need for independent scaling
+  - Specific services have different scaling requirements
+  - Team size grows significantly
+  - Clear service boundaries emerge
+  - Performance bottlenecks identified in specific areas
+
+**Decision**: Wait for user traffic and real-world usage patterns before making the microservices decision. Premature microservices can add unnecessary complexity without clear benefits. The monolith can be refactored into microservices later when there's data-driven evidence of the need.
+
+**Mitigation**:
+- Design with service boundaries in mind (even in monolith)
+- Use clean architecture to separate concerns
+- Keep services loosely coupled within monolith
+- Document potential service boundaries for future extraction
+- Monitor performance metrics to identify when microservices might be needed
+
+---
+
 ## Summary of Key Trade-offs
 
 | Decision | Chosen | Alternative | Primary Reason |
@@ -476,6 +549,7 @@ This document outlines the key architectural and design trade-offs made in the E
 | Testing | Manual | Automated | Speed |
 | Error Handling | Comprehensive | Basic | Production-ready |
 | Logging | Basic | Structured | Simplicity |
+| Architecture | Monolith | Microservices | Simplicity, wait for traffic data |
 
 ---
 
@@ -500,6 +574,7 @@ The architecture is designed to evolve:
 - Polling → SignalR/GraphQL Subscriptions (add real-time)
 - Basic logging → Structured logging (upgrade logging)
 - Manual tests → Automated tests (integration tests in progress)
+- Monolith → Microservices (only when traffic data confirms need)
 
-All decisions maintain a clear migration path without major rewrites.
+All decisions maintain a clear migration path without major rewrites. The monolith architecture can be refactored into microservices when user traffic and performance metrics indicate it's necessary, not before.
 

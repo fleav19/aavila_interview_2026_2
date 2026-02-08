@@ -84,27 +84,58 @@ This document captures user stories organized by role to help identify functiona
 - See task history/audit trail (who created, updated, when)
 - Cannot edit or delete the task
 
-**Status**: ⚠️ Partially Implemented (can view, but no detailed view page)
+**Status**: ✅ Implemented (full task detail page with audit trail)
 
 ---
 
-### US-VIEWER-003: Filter and Search Tasks
+### US-VIEWER-003: View Projects
+**As a** viewer  
+**I want to** view projects that contain tasks  
+**So that** I can see how tasks are organized
+
+**Acceptance Criteria**:
+- Can see list of projects in my organization
+- Can see tasks grouped by project
+- Can view project details (name, description, task count)
+- Cannot create, edit, or delete projects
+
+**Status**: ❌ Not Implemented
+
+---
+
+### US-VIEWER-004: View Subtasks
+**As a** viewer  
+**I want to** view subtasks of a task  
+**So that** I can see the breakdown of work
+
+**Acceptance Criteria**:
+- Can see subtasks when viewing a task
+- Can see subtask title, state, assignee
+- Cannot create, edit, or delete subtasks
+
+**Status**: ❌ Not Implemented
+
+---
+
+### US-VIEWER-005: Filter and Search Tasks
 **As a** viewer  
 **I want to** filter and search tasks  
 **So that** I can find specific tasks quickly
 
 **Acceptance Criteria**:
 - Can filter by completion status (completed/active)
+- Can filter by state
+- Can filter by project
 - Can search by title or description
 - Can sort by title, priority, due date, creation date
 - Filters persist while browsing
 - Clear visual indication of active filters
 
-**Status**: ✅ Implemented
+**Status**: ⚠️ Partially Implemented (basic filtering implemented, missing: project filter)
 
 ---
 
-### US-VIEWER-004: View Task Statistics
+### US-VIEWER-006: View Task Statistics
 **As a** viewer  
 **I want to** see statistics about tasks  
 **So that** I can understand overall progress
@@ -120,7 +151,7 @@ This document captures user stories organized by role to help identify functiona
 
 ---
 
-### US-VIEWER-005: View Available Todo States
+### US-VIEWER-007: View Available Todo States
 **As a** viewer  
 **I want to** see what states are available for tasks  
 **So that** I can understand the workflow
@@ -226,7 +257,7 @@ This document captures user stories organized by role to help identify functiona
 - Changes are saved with audit trail
 - Cannot edit tasks created by others (unless admin)
 
-**Status**: ⚠️ Partially Implemented (can edit with state selection, but missing: assignee selection)
+**Status**: ✅ Implemented (can edit with state selection and assignee selection)
 
 ---
 
@@ -276,7 +307,7 @@ This document captures user stories organized by role to help identify functiona
 - Can filter tasks by assignee
 - Cannot assign to users outside my organization
 
-**Status**: ❌ Not Implemented
+**Status**: ✅ Implemented (assignee dropdown in TaskForm, can assign/reassign tasks)
 
 ---
 
@@ -290,7 +321,7 @@ This document captures user stories organized by role to help identify functiona
 - Can see tasks I created and tasks assigned to me
 - Clear visual distinction between my tasks and assigned tasks
 
-**Status**: ❌ Not Implemented (filtering not available)
+**Status**: ✅ Implemented ("Assigned to Me" filter option in TaskFilters)
 
 ---
 
@@ -337,7 +368,45 @@ This document captures user stories organized by role to help identify functiona
 - Can sort by various fields
 - Filters can be combined
 
-**Status**: ⚠️ Partially Implemented (basic filtering with state filter, missing: assignee filter)
+**Status**: ✅ Implemented (filtering by state, assignee, status, search, and sorting)
+
+---
+
+### US-USER-011: Create and Manage Projects
+**As a** user  
+**I want to** create projects and group tasks together  
+**So that** I can organize related tasks
+
+**Acceptance Criteria**:
+- Can create a new project with name and description
+- Can assign tasks to a project when creating or editing
+- Can view tasks grouped by project
+- Can filter tasks by project
+- Can see project statistics (task count, completion rate)
+- Can edit project details (name, description)
+- Can delete projects (if no tasks assigned, or with confirmation)
+- Projects are scoped to my organization
+
+**Status**: ❌ Not Implemented
+
+---
+
+### US-USER-012: Create and Manage Subtasks
+**As a** user  
+**I want to** create subtasks for a task  
+**So that** I can break down work into smaller pieces
+
+**Acceptance Criteria**:
+- Can create subtasks when creating or editing a task
+- Can add subtask title, description, state, assignee
+- Can see list of subtasks for a task
+- Can edit subtask details
+- Can delete subtasks
+- Can mark subtasks as complete
+- Subtasks inherit organization and project from parent task
+- Can see subtask progress (e.g., 3 of 5 complete)
+
+**Status**: ❌ Not Implemented
 
 ---
 
@@ -531,7 +600,7 @@ This document captures user stories organized by role to help identify functiona
 - Can see when organization was created
 - Can see number of users in organization
 
-**Status**: ❌ Not Implemented
+**Status**: ✅ Implemented (Organization Settings tab with stats, name/slug editing, SSO placeholder)
 
 ---
 
@@ -539,18 +608,17 @@ This document captures user stories organized by role to help identify functiona
 
 ### ✅ Fully Implemented
 - Guest: Landing page, registration, login
-- Viewer: View tasks, filter/search, view stats, read-only enforcement, view todo states
-- User: Create/edit/delete own tasks, view tasks, filter/search, logout, view profile, select task state
-- Admin: All user capabilities, edit/delete any task, manage user roles, activate/deactivate users, manage todo states (CRUD)
+- Viewer: View tasks, filter/search, view stats, read-only enforcement, view todo states, task detail view
+- User: Create/edit/delete own tasks, view tasks, filter/search (by state, assignee, status), assign tasks, view assigned tasks, logout, view profile, select task state, task detail view
+- Admin: All user capabilities, edit/delete any task, manage user roles, activate/deactivate users, manage todo states (CRUD), organization settings management
 
 ### ⚠️ Partially Implemented
-- Viewer: Task detail view (no dedicated page)
-- User: Task editing (missing assignee selection), filtering (missing assignee filter)
-- Admin: Default state (set in seeder, no UI to change it), statistics (basic only, missing: by user, by state, trends), Organization settings (no UI)
+- Admin: Default state (set in seeder, can set when creating/editing states but no dedicated UI to change existing default), statistics (basic only, missing: by user, by state, trends)
 
 ### ❌ Not Implemented
-- User: Assign tasks, view assigned tasks, filter by assignee
-- Admin: Organization settings, Advanced statistics
+- Viewer: View projects, View subtasks
+- User: Create and manage projects, Create and manage subtasks
+- Admin: Advanced statistics (by user, by state, trends), State reordering UI (drag-and-drop), Manage projects (all users), Manage subtasks (all tasks)
 - All: GraphQL API (deferred)
 
 ---
@@ -558,13 +626,13 @@ This document captures user stories organized by role to help identify functiona
 ## Priority Recommendations
 
 ### High Priority (Core Functionality Gaps)
-1. **Task Assignment** (User) - US-USER-006, US-USER-007
-2. **View Todo States** (All) - US-VIEWER-005, US-USER-010 (filter by state)
+- None (all core features implemented)
 
 ### Medium Priority (Nice to Have)
-1. **Organization Settings** (Admin) - US-ADMIN-012
-2. **Advanced Statistics** (Admin) - US-ADMIN-011
-3. **Task Detail View** (Viewer/User) - US-VIEWER-002
+1. **Projects** (User/Admin) - US-USER-011, US-ADMIN-013 (group tasks together)
+2. **Subtasks** (User/Admin) - US-USER-012, US-ADMIN-014 (break down tasks)
+3. **Advanced Statistics** (Admin) - US-ADMIN-011 (by user, by state, trends)
+4. **State Reordering UI** (Admin) - US-ADMIN-009 (drag-and-drop interface)
 
 ### Low Priority (Polish)
 1. **State Reordering UI** (Admin) - US-ADMIN-009

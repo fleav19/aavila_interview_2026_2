@@ -544,6 +544,7 @@ This document defines the non-functional requirements for the Ezra TODO applicat
 - Health checks
 - Application Insights or similar
 - Error tracking (Sentry, etc.)
+- Telemetry and analytics tools (Grafana for monitoring/dashboards, Amplitude for user error tracking and behavior analytics)
 
 **Acceptance Criteria**:
 - System state can be determined

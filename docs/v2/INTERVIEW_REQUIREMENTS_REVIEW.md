@@ -245,12 +245,21 @@ Repository link exists, but should verify it's complete and accessible.
 - **User Preferences**: Configurable stats, theme, and language
 - **Soft Deletion**: Tasks and states are soft-deleted with audit trail
 - **Integration Tests**: Backend API integration tests
+- **Task Assignment**: Assign tasks to team members with filtering
+- **Task Detail View**: Full task detail page with audit trail
+- **Organization Settings**: Admin UI for managing organization with statistics
+- **Routing**: URL-based navigation with React Router
+
+### Planned for MVP: 📋
+- **Projects**: Group tasks together in projects for better organization
+- **Subtasks**: Create subtasks to break down work into smaller pieces
+
+**Note on MVP Flexibility**: The MVP implementation of Projects and Subtasks provides a solid foundation. While we could add more advanced features (e.g., nested project hierarchies, complex subtask dependencies, project templates), the current MVP scope balances functionality with implementation complexity. This provides a great starting point that can be extended based on user feedback.
 
 ### Future Enhancements: 📋
 - **GraphQL**: Deferred to future phase (not required for MVP)
-- **Task Assignment**: Assign tasks to team members
 - **Advanced Statistics**: Statistics by user, trends over time
-- **Organization Settings**: UI for managing organization settings
+- **State Reordering UI**: Drag-and-drop interface for reordering states
 
 ### Assessment: ✅ **EXCEEDS REQUIREMENT**
 MVP features are comprehensive and production-ready. Includes authentication, authorization, multi-tenancy, and user experience enhancements (dark mode, i18n) that go beyond basic MVP requirements.
