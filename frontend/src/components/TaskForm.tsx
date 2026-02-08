@@ -49,12 +49,33 @@ export const TaskForm = ({ task, onCancel, onSubmitSuccess }: TaskFormProps) => 
 
   const onSubmit = async (data: FormData) => {
     try {
+      // Format dueDate properly - only include if provided
+      let dueDate: string | undefined = undefined;
+      if (data.dueDate && data.dueDate.trim() !== '') {
+        // Convert date to ISO string (YYYY-MM-DDTHH:mm:ssZ)
+        // Parse the date string (YYYY-MM-DD) and convert to ISO
+        const dateStr = data.dueDate.trim();
+        const date = new Date(dateStr + 'T00:00:00');
+        if (!isNaN(date.getTime())) {
+          dueDate = date.toISOString();
+        }
+      }
+
+      // Build task data, only including fields that have values
       const taskData: CreateTaskDto | UpdateTaskDto = {
-        title: data.title,
-        description: data.description || undefined,
-        dueDate: data.dueDate ? `${data.dueDate}T00:00:00` : undefined,
+        title: data.title.trim(),
         priority: data.priority,
       };
+
+      // Only add description if it has a value
+      if (data.description && data.description.trim() !== '') {
+        taskData.description = data.description.trim();
+      }
+
+      // Only add dueDate if it was successfully parsed
+      if (dueDate) {
+        taskData.dueDate = dueDate;
+      }
 
       if (isEditMode && task) {
         await updateTask(task.id, taskData);
@@ -63,8 +84,9 @@ export const TaskForm = ({ task, onCancel, onSubmitSuccess }: TaskFormProps) => 
       }
       reset();
       onSubmitSuccess?.();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error submitting task:', error);
+      // Error is already handled in TaskContext and displayed via ErrorMessage component
     }
   };
 

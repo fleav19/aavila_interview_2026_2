@@ -56,9 +56,24 @@ export const TaskProvider = ({ children }: TaskProviderProps) => {
       const newTask = await taskApi.create(task);
       setTasks((prev) => [...prev, newTask]);
       await fetchStats();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create task');
-      throw err;
+    } catch (err: any) {
+      // Extract error message from response
+      let errorMessage = 'Failed to create task';
+      if (err.response?.data) {
+        if (err.response.data.errors) {
+          // Validation errors
+          const errors = err.response.data.errors;
+          errorMessage = `Validation failed: ${Object.entries(errors)
+            .map(([field, messages]: [string, any]) => `${field}: ${Array.isArray(messages) ? messages.join(', ') : messages}`)
+            .join('; ')}`;
+        } else if (err.response.data.message) {
+          errorMessage = err.response.data.message;
+        }
+      } else if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+      setError(errorMessage);
+      throw new Error(errorMessage);
     } finally {
       setLoading(false);
     }

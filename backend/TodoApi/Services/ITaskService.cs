@@ -4,13 +4,13 @@ namespace TodoApi.Services;
 
 public interface ITaskService
 {
-    Task<IEnumerable<TaskDto>> GetAllTasksAsync(string? filter, string? sortBy, bool? isCompleted);
-    Task<TaskDto?> GetTaskByIdAsync(int id);
-    Task<TaskDto> CreateTaskAsync(CreateTaskDto createTaskDto);
-    Task<TaskDto?> UpdateTaskAsync(int id, UpdateTaskDto updateTaskDto);
-    Task<bool> ToggleTaskStatusAsync(int id);
-    Task<bool> DeleteTaskAsync(int id);
-    Task<TaskStatsDto> GetTaskStatsAsync();
+    Task<IEnumerable<TaskDto>> GetAllTasksAsync(string? filter, string? sortBy, bool? isCompleted, int? organizationId, int? userId, string? userRole);
+    Task<TaskDto?> GetTaskByIdAsync(int id, int? organizationId, int? userId, string? userRole);
+    Task<TaskDto> CreateTaskAsync(CreateTaskDto createTaskDto, int userId, int organizationId);
+    Task<TaskDto?> UpdateTaskAsync(int id, UpdateTaskDto updateTaskDto, int? organizationId, int? userId, string? userRole);
+    Task<bool> ToggleTaskStatusAsync(int id, int? organizationId, int? userId, string? userRole);
+    Task<bool> DeleteTaskAsync(int id, int? organizationId, int? userId, string? userRole);
+    Task<TaskStatsDto> GetTaskStatsAsync(int? organizationId);
 }
 
 public class TaskStatsDto
