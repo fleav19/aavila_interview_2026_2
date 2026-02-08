@@ -1,4 +1,6 @@
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { ThemeProvider } from './contexts/ThemeContext';
+import { I18nProvider } from './contexts/I18nContext';
 import { TaskProvider } from './contexts/TaskContext';
 import { LandingPage } from './components/LandingPage';
 import { Dashboard } from './components/Dashboard';
@@ -17,9 +19,11 @@ const AppContent = () => {
 
   return (
     <AuthGuard>
-      <TaskProvider>
-        <Dashboard />
-      </TaskProvider>
+      <I18nProvider>
+        <TaskProvider>
+          <Dashboard />
+        </TaskProvider>
+      </I18nProvider>
     </AuthGuard>
   );
 };
@@ -27,7 +31,11 @@ const AppContent = () => {
 function App() {
   return (
     <AuthProvider>
-      <AppContent />
+      <ThemeProvider>
+        <I18nProvider>
+          <AppContent />
+        </I18nProvider>
+      </ThemeProvider>
     </AuthProvider>
   );
 }

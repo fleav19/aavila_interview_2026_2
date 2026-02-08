@@ -64,7 +64,7 @@ export const TaskItem = ({ task, onEdit }: TaskItemProps) => {
 
   return (
     <div
-      className={`bg-white border rounded-lg p-4 shadow-sm transition-all ${
+      className={`bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 shadow-sm transition-all ${
         task.isCompleted ? 'opacity-60' : ''
       } ${isDeleting ? 'opacity-50' : ''}`}
     >
@@ -73,7 +73,9 @@ export const TaskItem = ({ task, onEdit }: TaskItemProps) => {
           <div className="flex items-start justify-between gap-2">
             <h3
               className={`font-semibold text-lg ${
-                task.isCompleted ? 'line-through text-gray-500' : 'text-gray-900'
+                task.isCompleted 
+                  ? 'line-through text-gray-500 dark:text-gray-400' 
+                  : 'text-gray-900 dark:text-white'
               }`}
             >
               {task.title}
@@ -101,15 +103,17 @@ export const TaskItem = ({ task, onEdit }: TaskItemProps) => {
           {task.description && (
             <p
               className={`mt-2 text-sm ${
-                task.isCompleted ? 'text-gray-400' : 'text-gray-600'
+                task.isCompleted 
+                  ? 'text-gray-400 dark:text-gray-500' 
+                  : 'text-gray-600 dark:text-gray-300'
               }`}
             >
               {task.description}
             </p>
           )}
-          <div className="flex items-center gap-4 mt-3 text-xs text-gray-500">
+          <div className="flex items-center gap-4 mt-3 text-xs text-gray-500 dark:text-gray-400">
             {task.dueDate && (
-              <span className={overdue && !task.isCompleted ? 'text-red-600 font-medium' : ''}>
+              <span className={overdue && !task.isCompleted ? 'text-red-600 dark:text-red-400 font-medium' : ''}>
                 Due: {formatDate(task.dueDate)}
                 {overdue && !task.isCompleted && ' (Overdue)'}
               </span>
@@ -124,7 +128,7 @@ export const TaskItem = ({ task, onEdit }: TaskItemProps) => {
                 value={task.todoStateId}
                 onChange={(e) => handleStateChange(Number(e.target.value))}
                 disabled={changingState}
-                className="text-xs px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
+                className="text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
                 style={{ fontSize: '0.75rem' }}
               >
                 {states.map((state) => (
@@ -139,14 +143,14 @@ export const TaskItem = ({ task, onEdit }: TaskItemProps) => {
         <div className="flex gap-2">
           <button
             onClick={() => onEdit(task)}
-            className="px-3 py-1 text-sm text-blue-600 hover:bg-blue-50 rounded transition-colors"
+            className="px-3 py-1 text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
             disabled={isDeleting}
           >
             Edit
           </button>
           <button
             onClick={handleDelete}
-            className="px-3 py-1 text-sm text-red-600 hover:bg-red-50 rounded transition-colors"
+            className="px-3 py-1 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
             disabled={isDeleting}
           >
             Delete

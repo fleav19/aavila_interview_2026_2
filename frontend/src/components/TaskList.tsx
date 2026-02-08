@@ -53,10 +53,10 @@ export const TaskList = () => {
       ) : (
         <>
           <div className="flex justify-between items-center">
-            <h1 className="text-3xl font-bold text-gray-900">My Tasks</h1>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">My Tasks</h1>
             <button
               onClick={() => setShowForm(true)}
-              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
+              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 dark:hover:bg-blue-500 transition-colors"
             >
               + New Task
             </button>
@@ -76,8 +76,8 @@ export const TaskList = () => {
           {loading && <LoadingSpinner message="Refreshing..." />}
 
           {tasks.length === 0 ? (
-            <div className="text-center py-12 bg-white rounded-lg shadow-sm">
-              <p className="text-gray-500 text-lg">
+            <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+              <p className="text-gray-500 dark:text-gray-400 text-lg">
                 {filter ? 'No tasks match your search.' : 'No tasks yet. Create your first task!'}
               </p>
             </div>

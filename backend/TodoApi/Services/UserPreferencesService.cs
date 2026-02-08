@@ -33,6 +33,8 @@ public class UserPreferencesService : IUserPreferencesService
             return new UserPreferencesDto
             {
                 VisibleStats = new List<string> { "Total", "High Priority" }, // Default visible stats
+                Theme = "light",
+                Language = "en",
                 OtherPreferences = new Dictionary<string, object>()
             };
         }
@@ -43,6 +45,8 @@ public class UserPreferencesService : IUserPreferencesService
             return preferences ?? new UserPreferencesDto
             {
                 VisibleStats = new List<string> { "Total", "High Priority" },
+                Theme = "light",
+                Language = "en",
                 OtherPreferences = new Dictionary<string, object>()
             };
         }
@@ -52,6 +56,8 @@ public class UserPreferencesService : IUserPreferencesService
             return new UserPreferencesDto
             {
                 VisibleStats = new List<string> { "Total", "High Priority" },
+                Theme = "light",
+                Language = "en",
                 OtherPreferences = new Dictionary<string, object>()
             };
         }
@@ -74,6 +80,8 @@ public class UserPreferencesService : IUserPreferencesService
             currentPreferences = new UserPreferencesDto
             {
                 VisibleStats = new List<string> { "Total", "High Priority" },
+                Theme = "light",
+                Language = "en",
                 OtherPreferences = new Dictionary<string, object>()
             };
         }
@@ -85,6 +93,8 @@ public class UserPreferencesService : IUserPreferencesService
                     ?? new UserPreferencesDto
                     {
                         VisibleStats = new List<string> { "Total", "High Priority" },
+                        Theme = "light",
+                        Language = "en",
                         OtherPreferences = new Dictionary<string, object>()
                     };
             }
@@ -93,6 +103,8 @@ public class UserPreferencesService : IUserPreferencesService
                 currentPreferences = new UserPreferencesDto
                 {
                     VisibleStats = new List<string> { "Total", "High Priority" },
+                    Theme = "light",
+                    Language = "en",
                     OtherPreferences = new Dictionary<string, object>()
                 };
             }
@@ -102,6 +114,16 @@ public class UserPreferencesService : IUserPreferencesService
         if (updateDto.VisibleStats != null)
         {
             currentPreferences.VisibleStats = updateDto.VisibleStats;
+        }
+
+        if (!string.IsNullOrEmpty(updateDto.Theme))
+        {
+            currentPreferences.Theme = updateDto.Theme;
+        }
+
+        if (!string.IsNullOrEmpty(updateDto.Language))
+        {
+            currentPreferences.Language = updateDto.Language;
         }
 
         if (updateDto.OtherPreferences != null)

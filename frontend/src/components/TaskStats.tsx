@@ -2,6 +2,7 @@ import { useTasks } from '../contexts/TaskContext';
 import { useState, useEffect } from 'react';
 import { todoStateApi } from '../services/todoStateApi';
 import { userPreferencesApi } from '../services/userPreferencesApi';
+import { useTheme } from '../contexts/ThemeContext';
 import type { TodoState } from '../types/todoState';
 import type { UserPreferences } from '../types/userPreferences';
 import { StatsSettings } from './StatsSettings';
@@ -13,6 +14,7 @@ interface TaskStatsProps {
 
 export const TaskStats = ({ showSettings: externalShowSettings, onSettingsClose }: TaskStatsProps = { showSettings: false }) => {
   const { stats } = useTasks();
+  const { theme } = useTheme();
   const [states, setStates] = useState<TodoState[]>([]);
   const [preferences, setPreferences] = useState<UserPreferences | null>(null);
   const [internalShowSettings, setInternalShowSettings] = useState(false);
@@ -55,22 +57,40 @@ export const TaskStats = ({ showSettings: externalShowSettings, onSettingsClose 
     return `rgba(${r}, ${g}, ${b}, ${opacity})`;
   };
 
-  // Build all available stats
+  // Build all available stats with dark mode support
+  const isDark = theme === 'dark';
   const coreStats = [
-    { id: 'Total', label: 'Total', value: stats.total, bgColor: '#F3F4F6', textColor: '#1F2937' },
-    { id: 'High Priority', label: 'High Priority', value: stats.highPriority, bgColor: '#FEE2E2', textColor: '#991B1B' },
+    { 
+      id: 'Total', 
+      label: 'Total', 
+      value: stats.total, 
+      bgColor: isDark ? '#374151' : '#F3F4F6', 
+      textColor: isDark ? '#F9FAFB' : '#1F2937' 
+    },
+    { 
+      id: 'High Priority', 
+      label: 'High Priority', 
+      value: stats.highPriority, 
+      bgColor: isDark ? '#7F1D1D' : '#FEE2E2', 
+      textColor: isDark ? '#FCA5A5' : '#991B1B' 
+    },
   ];
 
   // Build state stats list from ALL states, including those with 0 tasks
   // This ensures selected stats always show, even if they have 0 tasks
   const stateStatsList = states.map(state => {
     const count = stateCounts[state.displayName] || 0;
+    const stateColor = state.color || '#6B7280';
+    
+    // For dark mode, use the state color as background with white text
+    // For light mode, use transparent background with state color as text
     return {
       id: state.displayName,
       label: state.displayName,
       value: count,
-      bgColor: state.color || '#6B7280',
-      textColor: state.color || '#6B7280',
+      bgColor: isDark ? stateColor : stateColor, // Will be handled in rendering
+      textColor: isDark ? '#FFFFFF' : stateColor, // White text in dark mode for contrast
+      originalColor: stateColor, // Keep original for border
     };
   });
 
@@ -109,13 +129,47 @@ export const TaskStats = ({ showSettings: externalShowSettings, onSettingsClose 
         />
       ) : (
         <>
-          <h3 className="text-lg font-semibold text-gray-700 mb-3">Statistics</h3>
+          <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-3">Statistics</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {allStats.map((item) => {
-        const bgColor = item.bgColor.startsWith('#') 
-          ? hexToRgba(item.bgColor, 0.1) 
-          : item.bgColor;
-        const textColor = item.textColor || '#1F2937';
+        // Check if this is a state stat (has originalColor) or core stat
+        const itemWithOriginal = item as typeof item & { originalColor?: string };
+        const isStateStat = !!itemWithOriginal.originalColor;
+        const originalColor = itemWithOriginal.originalColor || item.bgColor;
+        
+        // For dark mode:
+        // - Core stats: solid darker backgrounds with light text
+        // - State stats: use original color as solid background with white text
+        // For light mode:
+        // - Core stats: transparent backgrounds with dark text
+        // - State stats: transparent backgrounds with state color text
+        let bgColor: string;
+        let textColor: string;
+        let borderColor: string;
+        
+        if (isStateStat) {
+          // State stat card
+          if (isDark) {
+            bgColor = originalColor; // Solid state color background
+            textColor = '#FFFFFF'; // White text for contrast
+            borderColor = hexToRgba(originalColor, 0.8); // Slightly transparent border
+          } else {
+            bgColor = hexToRgba(originalColor, 0.1); // Light transparent background
+            textColor = originalColor; // State color text
+            borderColor = originalColor; // State color border
+          }
+        } else {
+          // Core stat card (Total, High Priority)
+          if (isDark) {
+            bgColor = item.bgColor; // Already set to dark mode color
+            textColor = item.textColor; // Already set to light color
+            borderColor = hexToRgba(item.bgColor, 0.5);
+          } else {
+            bgColor = hexToRgba(item.bgColor, 0.1);
+            textColor = item.textColor;
+            borderColor = item.bgColor;
+          }
+        }
         
         return (
           <div
@@ -123,7 +177,7 @@ export const TaskStats = ({ showSettings: externalShowSettings, onSettingsClose 
             className="p-4 rounded-lg shadow-sm text-center border"
             style={{
               backgroundColor: bgColor,
-              borderColor: item.bgColor,
+              borderColor: borderColor,
               color: textColor,
             }}
           >
