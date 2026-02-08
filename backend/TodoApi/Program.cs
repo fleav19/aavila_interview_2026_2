@@ -61,6 +61,7 @@ builder.Services.AddDbContext<TodoDbContext>(options =>
 // Register services
 builder.Services.AddScoped<ITaskService, TaskService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<ITodoStateService, TodoStateService>();
 builder.Services.AddScoped<IUserContextService, UserContextService>();
 builder.Services.AddHttpContextAccessor();
 

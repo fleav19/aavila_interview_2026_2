@@ -150,6 +150,43 @@ public class AuthService : IAuthService
         return MapToUserDto(user, user.Organization, user.Role);
     }
 
+    public async Task<AuthResponseDto> UpdateUserRoleAsync(int userId, string newRole, int organizationId)
+    {
+        var user = await _context.Users
+            .Include(u => u.Organization)
+            .Include(u => u.Role)
+            .FirstOrDefaultAsync(u => u.Id == userId && u.OrganizationId == organizationId && !u.IsDeleted);
+
+        if (user == null)
+        {
+            throw new InvalidOperationException("User not found");
+        }
+
+        var role = await _context.Roles.FirstOrDefaultAsync(r => r.Name == newRole);
+        if (role == null)
+        {
+            throw new InvalidOperationException($"Role '{newRole}' not found");
+        }
+
+        user.RoleId = role.Id;
+        user.UpdatedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+
+        // Reload user with new role
+        await _context.Entry(user).Reference(u => u.Role).LoadAsync();
+
+        _logger.LogInformation("Updated user {UserId} role to {Role} (dev testing mode)", userId, newRole);
+
+        // Generate new token with updated role
+        var token = GenerateJwtToken(user);
+
+        return new AuthResponseDto
+        {
+            Token = token,
+            User = MapToUserDto(user, user.Organization, user.Role)
+        };
+    }
+
     private string GenerateJwtToken(User user)
     {
         // Ensure Role is loaded
