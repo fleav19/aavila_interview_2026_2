@@ -52,7 +52,7 @@ export const TaskForm = ({ task, onCancel, onSubmitSuccess }: TaskFormProps) => 
 
   const defaultState = states.find(s => s.isDefault);
 
-  const { register, handleSubmit, watch, reset, formState: { errors } } = useForm<TaskFormData & { todoStateId?: number; assignedToId?: number | null; projectId?: number | null; parentTaskId?: number | null; dueDate?: string }>({
+  const { register, handleSubmit, watch, reset, formState: { errors, isSubmitting, isValid, touchedFields } } = useForm<TaskFormData & { todoStateId?: number; assignedToId?: number | null; projectId?: number | null; parentTaskId?: number | null; dueDate?: string }>({
     mode: 'onChange', // Validate on change for real-time feedback
     reValidateMode: 'onChange', // Re-validate on change
     defaultValues: task

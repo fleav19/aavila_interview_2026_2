@@ -91,6 +91,12 @@ export const taskApi = {
     const response = await api.get<TaskStats>('/tasks/stats');
     return response.data;
   },
+
+  // Get advanced statistics (Admin only)
+  getAdvancedStats: async (days?: number): Promise<import('../types/advancedStats').AdvancedStats> => {
+    const response = await api.get('/tasks/stats/advanced', { params: { days } });
+    return response.data;
+  },
 };
 
 export default api;

@@ -201,5 +201,50 @@ public class TodoStatesController : ControllerBase
             return StatusCode(500, new { message = "An error occurred while deleting the todo state" });
         }
     }
+
+    /// <summary>
+    /// Reorder todo states (Admin only)
+    /// </summary>
+    [HttpPost("reorder")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> ReorderTodoStates([FromBody] ReorderTodoStatesDto reorderDto)
+    {
+        if (reorderDto == null || reorderDto.StateIds == null || reorderDto.StateIds.Count == 0)
+        {
+            return BadRequest(new { message = "State IDs list is required" });
+        }
+
+        var organizationId = _userContext.GetCurrentOrganizationId();
+        var userId = _userContext.GetCurrentUserId();
+
+        if (organizationId == null || userId == null)
+        {
+            return Unauthorized(new { message = "User information not found" });
+        }
+
+        try
+        {
+            var success = await _todoStateService.ReorderTodoStatesAsync(reorderDto.StateIds, organizationId.Value, userId.Value);
+            if (!success)
+            {
+                return BadRequest(new { message = "Failed to reorder todo states" });
+            }
+
+            return Ok(new { message = "Todo states reordered successfully" });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error reordering todo states");
+            return StatusCode(500, new { message = "An error occurred while reordering todo states" });
+        }
+    }
 }
 

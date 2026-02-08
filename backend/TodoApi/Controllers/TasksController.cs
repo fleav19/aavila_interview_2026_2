@@ -63,6 +63,21 @@ public class TasksController : ControllerBase
     }
 
     /// <summary>
+    /// Get advanced statistics (by user, trends) - Admin only
+    /// </summary>
+    [HttpGet("stats/advanced")]
+    [ProducesResponseType(typeof(AdvancedStatsDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult<AdvancedStatsDto>> GetAdvancedStats([FromQuery] int? days = 30)
+    {
+        var organizationId = _userContext.GetCurrentOrganizationId();
+        var stats = await _taskService.GetAdvancedStatsAsync(organizationId, days);
+        return Ok(stats);
+    }
+
+    /// <summary>
     /// Get a specific task by ID
     /// </summary>
     [HttpGet("{id}")]

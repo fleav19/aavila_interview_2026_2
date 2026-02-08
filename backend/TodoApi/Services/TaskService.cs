@@ -491,6 +491,120 @@ public class TaskService : ITaskService
         };
     }
 
+    public async Task<AdvancedStatsDto> GetAdvancedStatsAsync(int? organizationId, int? days = 30)
+    {
+        if (organizationId == null)
+        {
+            throw new UnauthorizedAccessException("User organization not found");
+        }
+
+        var daysToLookBack = days ?? 30;
+        var startDate = DateTime.UtcNow.AddDays(-daysToLookBack).Date;
+
+        var tasks = await _context.Tasks
+            .Include(t => t.TodoState)
+            .Include(t => t.AssignedTo)
+            .Include(t => t.CreatedBy)
+            .Where(t => !t.IsDeleted && t.OrganizationId == organizationId.Value)
+            .ToListAsync();
+
+        var doneStateName = "done";
+
+        // Statistics by User
+        var byUser = tasks
+            .Where(t => t.AssignedTo != null)
+            .GroupBy(t => t.AssignedTo!)
+            .ToDictionary(
+                g => $"{g.Key.FirstName} {g.Key.LastName}",
+                g => new UserTaskStatsDto
+                {
+                    UserId = g.Key.Id,
+                    UserName = $"{g.Key.FirstName} {g.Key.LastName}",
+                    UserEmail = g.Key.Email,
+                    TotalTasks = g.Count(),
+                    CompletedTasks = g.Count(t => t.TodoState.Name.ToLower() == doneStateName),
+                    ActiveTasks = g.Count(t => t.TodoState.Name.ToLower() != doneStateName),
+                    HighPriorityTasks = g.Count(t => t.Priority == TaskPriority.High && t.TodoState.Name.ToLower() != doneStateName),
+                    StateCounts = g.GroupBy(t => t.TodoState.DisplayName)
+                        .ToDictionary(sg => sg.Key, sg => sg.Count())
+                }
+            );
+
+        // Add unassigned tasks stats
+        var unassignedTasks = tasks.Where(t => t.AssignedTo == null).ToList();
+        if (unassignedTasks.Any())
+        {
+            byUser["Unassigned"] = new UserTaskStatsDto
+            {
+                UserId = 0,
+                UserName = "Unassigned",
+                UserEmail = "",
+                TotalTasks = unassignedTasks.Count,
+                CompletedTasks = unassignedTasks.Count(t => t.TodoState.Name.ToLower() == doneStateName),
+                ActiveTasks = unassignedTasks.Count(t => t.TodoState.Name.ToLower() != doneStateName),
+                HighPriorityTasks = unassignedTasks.Count(t => t.Priority == TaskPriority.High && t.TodoState.Name.ToLower() != doneStateName),
+                StateCounts = unassignedTasks.GroupBy(t => t.TodoState.DisplayName)
+                    .ToDictionary(sg => sg.Key, sg => sg.Count())
+            };
+        }
+
+        // Statistics by State
+        var byState = tasks
+            .GroupBy(t => t.TodoState.DisplayName)
+            .ToDictionary(
+                g => g.Key,
+                g => g.Count()
+            );
+
+        // Trends (daily snapshots for the last N days)
+        var trends = new List<TrendDataPointDto>();
+        var currentDate = startDate;
+        var today = DateTime.UtcNow.Date;
+
+        while (currentDate <= today)
+        {
+            var nextDate = currentDate.AddDays(1);
+            
+            // Tasks created on or before this date
+            var tasksUpToDate = tasks.Where(t => t.CreatedAt.Date <= currentDate).ToList();
+            
+            // Tasks completed on or before this date
+            var completedUpToDate = tasksUpToDate
+                .Where(t => t.CompletedAt.HasValue && t.CompletedAt.Value.Date <= currentDate)
+                .ToList();
+
+            // Tasks created on this specific date
+            var tasksCreatedOnDate = tasks.Count(t => t.CreatedAt.Date == currentDate);
+            
+            // Tasks completed on this specific date
+            var tasksCompletedOnDate = tasks.Count(t => 
+                t.CompletedAt.HasValue && t.CompletedAt.Value.Date == currentDate);
+
+            // State counts for tasks up to this date
+            var stateCountsForDate = tasksUpToDate
+                .GroupBy(t => t.TodoState.DisplayName)
+                .ToDictionary(g => g.Key, g => g.Count());
+
+            trends.Add(new TrendDataPointDto
+            {
+                Date = currentDate,
+                TasksCreated = tasksCreatedOnDate,
+                TasksCompleted = tasksCompletedOnDate,
+                TotalTasks = tasksUpToDate.Count,
+                StateCounts = stateCountsForDate
+            });
+
+            currentDate = nextDate;
+        }
+
+        return new AdvancedStatsDto
+        {
+            ByUser = byUser,
+            Trends = trends,
+            ByState = byState
+        };
+    }
+
     private static TaskDto MapToDto(Models.Task task, bool includeSubtasks = false)
     {
         // Map TodoState to IsCompleted for backward compatibility

@@ -74,6 +74,17 @@ function App() {
                 }
               />
 
+              <Route
+                path="/stats"
+                element={
+                  <AdminRoute>
+                    <TaskProvider>
+                      <Dashboard />
+                    </TaskProvider>
+                  </AdminRoute>
+                }
+              />
+
               {/* Default redirect */}
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
