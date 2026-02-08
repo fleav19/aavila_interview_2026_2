@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useI18n } from '../contexts/I18nContext';
 import { TaskList } from './TaskList';
@@ -13,10 +14,35 @@ import { DevConsole } from './DevConsole';
 export const Dashboard = () => {
   const { user } = useAuth();
   const { t } = useI18n();
+  const navigate = useNavigate();
+  const location = useLocation();
   const isAdmin = user?.role === 'Admin';
-  const [activeTab, setActiveTab] = useState<'tasks' | 'users' | 'states' | 'organization'>('tasks');
   const [showStatsSettings, setShowStatsSettings] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+
+  // Determine active tab from URL
+  const getActiveTab = () => {
+    const path = location.pathname;
+    if (path === '/users') return 'users';
+    if (path === '/states') return 'states';
+    if (path === '/organization') return 'organization';
+    return 'tasks'; // default
+  };
+
+  const activeTab = getActiveTab();
+
+  // Handle tab navigation
+  const handleTabChange = (tab: 'tasks' | 'users' | 'states' | 'organization') => {
+    if (tab === 'tasks') {
+      navigate('/tasks');
+    } else if (tab === 'users' && isAdmin) {
+      navigate('/users');
+    } else if (tab === 'states' && isAdmin) {
+      navigate('/states');
+    } else if (tab === 'organization' && isAdmin) {
+      navigate('/organization');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -50,7 +76,7 @@ export const Dashboard = () => {
         <div className="mb-6 border-b border-gray-200 dark:border-gray-700">
           <nav className="flex space-x-8">
             <button
-              onClick={() => setActiveTab('tasks')}
+              onClick={() => handleTabChange('tasks')}
               className={`py-4 px-1 border-b-2 font-medium text-sm ${
                 activeTab === 'tasks'
                   ? 'border-blue-500 text-blue-600 dark:text-blue-400'
@@ -62,7 +88,7 @@ export const Dashboard = () => {
             {isAdmin && (
               <>
                 <button
-                  onClick={() => setActiveTab('users')}
+                  onClick={() => handleTabChange('users')}
                   className={`py-4 px-1 border-b-2 font-medium text-sm ${
                     activeTab === 'users'
                       ? 'border-blue-500 text-blue-600 dark:text-blue-400'
@@ -72,7 +98,7 @@ export const Dashboard = () => {
                   {t('nav.users')}
                 </button>
                 <button
-                  onClick={() => setActiveTab('states')}
+                  onClick={() => handleTabChange('states')}
                   className={`py-4 px-1 border-b-2 font-medium text-sm ${
                     activeTab === 'states'
                       ? 'border-blue-500 text-blue-600 dark:text-blue-400'
@@ -82,7 +108,7 @@ export const Dashboard = () => {
                   {t('nav.todoStates')}
                 </button>
                 <button
-                  onClick={() => setActiveTab('organization')}
+                  onClick={() => handleTabChange('organization')}
                   className={`py-4 px-1 border-b-2 font-medium text-sm ${
                     activeTab === 'organization'
                       ? 'border-blue-500 text-blue-600 dark:text-blue-400'
