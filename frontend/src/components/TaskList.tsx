@@ -19,6 +19,9 @@ export const TaskList = () => {
   const [showForm, setShowForm] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | undefined>(undefined);
   const [viewingTaskId, setViewingTaskId] = useState<number | null>(null);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const [isReordering, setIsReordering] = useState(false);
 
   useEffect(() => {
     // Handle special case: -1 means unassigned
@@ -62,6 +65,56 @@ export const TaskList = () => {
   const handleCancel = () => {
     setShowForm(false);
     setEditingTask(undefined);
+  };
+
+  const handleDragStart = (index: number) => {
+    setDraggedIndex(index);
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    if (draggedIndex === null) return;
+    e.preventDefault();
+    setDragOverIndex(index);
+  };
+
+  const handleDragLeave = () => {
+    setDragOverIndex(null);
+  };
+
+  const handleDrop = async (e: React.DragEvent, dropIndex: number) => {
+    if (draggedIndex === null || draggedIndex === dropIndex) {
+      setDraggedIndex(null);
+      setDragOverIndex(null);
+      return;
+    }
+
+    e.preventDefault();
+
+    // Reorder tasks locally
+    const newTasks = [...tasks];
+    const [draggedTask] = newTasks.splice(draggedIndex, 1);
+    newTasks.splice(dropIndex, 0, draggedTask);
+
+    // Update order in backend
+    try {
+      setIsReordering(true);
+      const taskIds = newTasks.map(t => t.id);
+      await taskApi.reorder(taskIds);
+      await fetchTasks(filter || undefined, sortBy, isCompleted, todoStateId, assignedToId === -1 ? undefined : assignedToId, assignedToId === -1 ? true : undefined, projectId);
+    } catch (err: any) {
+      const errorMsg = err.response?.data?.message || 'Failed to reorder tasks';
+      alert(errorMsg);
+      await fetchTasks(filter || undefined, sortBy, isCompleted, todoStateId, assignedToId === -1 ? undefined : assignedToId, assignedToId === -1 ? true : undefined, projectId);
+    } finally {
+      setIsReordering(false);
+      setDraggedIndex(null);
+      setDragOverIndex(null);
+    }
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+    setDragOverIndex(null);
   };
 
   if (loading && tasks.length === 0) {
@@ -115,9 +168,60 @@ export const TaskList = () => {
             </div>
           ) : (
             <div className="space-y-3">
-              {tasks.map((task) => (
-                <TaskItem key={task.id} task={task} onEdit={handleEdit} onView={handleView} />
+              {tasks.length > 1 && (
+                <div className="px-4 py-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md mb-2">
+                  <p className="text-sm text-blue-800 dark:text-blue-200">
+                    💡 Drag tasks by the grip icon to reorder them
+                  </p>
+                </div>
+              )}
+              {tasks.map((task, index) => (
+                <div
+                  key={task.id}
+                  className={`relative transition-all ${
+                    draggedIndex === index
+                      ? 'opacity-50 scale-95 z-50'
+                      : dragOverIndex === index
+                      ? 'border-l-4 border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                      : ''
+                  }`}
+                >
+                  {/* Drag Handle */}
+                  <div
+                    draggable={!isReordering}
+                    onDragStart={(e) => {
+                      handleDragStart(index);
+                      e.dataTransfer.effectAllowed = 'move';
+                    }}
+                    onDragEnd={handleDragEnd}
+                    className="absolute left-2 top-1/2 -translate-y-1/2 z-10 cursor-grab active:cursor-grabbing text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 p-2"
+                    title="Drag to reorder"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
+                    </svg>
+                  </div>
+                  {/* Drop Zone */}
+                  <div
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      handleDragOver(e, index);
+                    }}
+                    onDragLeave={handleDragLeave}
+                    onDrop={(e) => handleDrop(e, index)}
+                    className="pl-10"
+                  >
+                    <TaskItem task={task} onEdit={handleEdit} onView={handleView} />
+                  </div>
+                </div>
               ))}
+              {isReordering && (
+                <div className="px-4 py-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md">
+                  <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                    Saving new order...
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </>

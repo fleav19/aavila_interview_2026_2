@@ -5,6 +5,7 @@ import { useI18n } from '../contexts/I18nContext';
 import { TaskList } from './TaskList';
 import { TaskStats } from './TaskStats';
 import { TodoStateList } from './TodoStateList';
+import { AdvancedStats } from './AdvancedStats';
 import { ProjectList } from './ProjectList';
 import { UserManagementList } from './UserManagementList';
 import { OrganizationSettings } from './OrganizationSettings';
@@ -28,13 +29,14 @@ export const Dashboard = () => {
     if (path === '/states') return 'states';
     if (path === '/projects') return 'projects';
     if (path === '/organization') return 'organization';
+    if (path === '/stats') return 'stats';
     return 'tasks'; // default
   };
 
   const activeTab = getActiveTab();
 
   // Handle tab navigation
-  const handleTabChange = (tab: 'tasks' | 'users' | 'states' | 'projects' | 'organization') => {
+  const handleTabChange = (tab: 'tasks' | 'users' | 'states' | 'projects' | 'organization' | 'stats') => {
     if (tab === 'tasks') {
       navigate('/tasks');
     } else if (tab === 'users' && isAdmin) {
@@ -45,6 +47,8 @@ export const Dashboard = () => {
       navigate('/projects');
     } else if (tab === 'organization' && isAdmin) {
       navigate('/organization');
+    } else if (tab === 'stats' && isAdmin) {
+      navigate('/stats');
     }
   };
 
@@ -122,6 +126,16 @@ export const Dashboard = () => {
                   {t('nav.todoStates')}
                 </button>
                 <button
+                  onClick={() => handleTabChange('stats')}
+                  className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                    activeTab === 'stats'
+                      ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                      : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
+                  }`}
+                >
+                  Statistics
+                </button>
+                <button
                   onClick={() => handleTabChange('organization')}
                   className={`py-4 px-1 border-b-2 font-medium text-sm ${
                     activeTab === 'organization'
@@ -148,6 +162,8 @@ export const Dashboard = () => {
           <UserManagementList />
         ) : activeTab === 'states' ? (
           <TodoStateList />
+        ) : activeTab === 'stats' ? (
+          <AdvancedStats />
         ) : (
           <OrganizationSettings />
         )}

@@ -112,6 +112,10 @@ public static class DataSeeder
                         {
                             missingTasksColumns.Add("ProjectId");
                         }
+                        if (!tasksColumns.Contains("Order", StringComparer.OrdinalIgnoreCase))
+                        {
+                            missingTasksColumns.Add("Order");
+                        }
                         if (missingTasksColumns.Count > 0)
                         {
                             needsRecreation = true;

@@ -154,6 +154,7 @@ public class TodoDbContext : DbContext
             entity.HasIndex(e => e.ParentTaskId);
             entity.HasIndex(e => e.OrganizationId);
             entity.HasIndex(e => e.CreatedAt);
+            entity.HasIndex(e => e.Order);
             entity.HasIndex(e => e.IsDeleted);
             entity.HasIndex(e => new { e.OrganizationId, e.TodoStateId });
             entity.HasIndex(e => new { e.OrganizationId, e.IsDeleted });

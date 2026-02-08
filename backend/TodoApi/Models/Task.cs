@@ -16,6 +16,7 @@ public class Task
     public int? UpdatedById { get; set; }
     public DateTime? DueDate { get; set; }
     public TaskPriority Priority { get; set; } = TaskPriority.Medium;
+    public int? Order { get; set; } // Custom ordering for drag-and-drop
     public DateTime? CompletedAt { get; set; }
     public bool IsDeleted { get; set; } = false;
     public DateTime? DeletedAt { get; set; }

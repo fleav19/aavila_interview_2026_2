@@ -30,5 +30,10 @@ export const todoStateApi = {
   delete: async (id: number): Promise<void> => {
     await api.delete(`/todostates/${id}`);
   },
+
+  // Reorder todo states (Admin only)
+  reorder: async (stateIds: number[]): Promise<void> => {
+    await api.post('/todostates/reorder', { stateIds });
+  },
 };
 

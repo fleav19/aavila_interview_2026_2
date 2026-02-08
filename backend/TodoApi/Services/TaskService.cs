@@ -87,14 +87,14 @@ public class TaskService : ITaskService
                 (t.Description != null && t.Description.Contains(filter)));
         }
 
-        // Sorting
+        // Sorting - Order field takes precedence if set, then apply sortBy
         query = sortBy?.ToLower() switch
         {
-            "title" => query.OrderBy(t => t.Title),
-            "priority" => query.OrderByDescending(t => t.Priority).ThenBy(t => t.CreatedAt),
-            "duedate" => query.OrderBy(t => t.DueDate ?? DateTime.MaxValue),
-            "created" => query.OrderByDescending(t => t.CreatedAt),
-            _ => query.OrderByDescending(t => t.CreatedAt) // Default: newest first
+            "title" => query.OrderBy(t => t.Order ?? int.MaxValue).ThenBy(t => t.Title),
+            "priority" => query.OrderBy(t => t.Order ?? int.MaxValue).ThenByDescending(t => t.Priority).ThenBy(t => t.CreatedAt),
+            "duedate" => query.OrderBy(t => t.Order ?? int.MaxValue).ThenBy(t => t.DueDate ?? DateTime.MaxValue),
+            "created" => query.OrderBy(t => t.Order ?? int.MaxValue).ThenByDescending(t => t.CreatedAt),
+            _ => query.OrderBy(t => t.Order ?? int.MaxValue).ThenByDescending(t => t.CreatedAt) // Default: custom order first, then newest first
         };
 
         var tasks = await query.ToListAsync();
@@ -489,6 +489,176 @@ public class TaskService : ITaskService
             HighPriority = tasks.Count(t => t.Priority == TaskPriority.High && t.TodoState.Name.ToLower() != doneStateName),
             StateCounts = stateCounts
         };
+    }
+
+    public async Task<AdvancedStatsDto> GetAdvancedStatsAsync(int? organizationId, int? days = 30)
+    {
+        if (organizationId == null)
+        {
+            throw new UnauthorizedAccessException("User organization not found");
+        }
+
+        var daysToLookBack = days ?? 30;
+        var startDate = DateTime.UtcNow.AddDays(-daysToLookBack).Date;
+
+        var tasks = await _context.Tasks
+            .Include(t => t.TodoState)
+            .Include(t => t.AssignedTo)
+            .Include(t => t.CreatedBy)
+            .Where(t => !t.IsDeleted && t.OrganizationId == organizationId.Value)
+            .ToListAsync();
+
+        var doneStateName = "done";
+
+        // Statistics by User
+        var byUser = tasks
+            .Where(t => t.AssignedTo != null)
+            .GroupBy(t => t.AssignedTo!)
+            .ToDictionary(
+                g => $"{g.Key.FirstName} {g.Key.LastName}",
+                g => new UserTaskStatsDto
+                {
+                    UserId = g.Key.Id,
+                    UserName = $"{g.Key.FirstName} {g.Key.LastName}",
+                    UserEmail = g.Key.Email,
+                    TotalTasks = g.Count(),
+                    CompletedTasks = g.Count(t => t.TodoState.Name.ToLower() == doneStateName),
+                    ActiveTasks = g.Count(t => t.TodoState.Name.ToLower() != doneStateName),
+                    HighPriorityTasks = g.Count(t => t.Priority == TaskPriority.High && t.TodoState.Name.ToLower() != doneStateName),
+                    StateCounts = g.GroupBy(t => t.TodoState.DisplayName)
+                        .ToDictionary(sg => sg.Key, sg => sg.Count())
+                }
+            );
+
+        // Add unassigned tasks stats
+        var unassignedTasks = tasks.Where(t => t.AssignedTo == null).ToList();
+        if (unassignedTasks.Any())
+        {
+            byUser["Unassigned"] = new UserTaskStatsDto
+            {
+                UserId = 0,
+                UserName = "Unassigned",
+                UserEmail = "",
+                TotalTasks = unassignedTasks.Count,
+                CompletedTasks = unassignedTasks.Count(t => t.TodoState.Name.ToLower() == doneStateName),
+                ActiveTasks = unassignedTasks.Count(t => t.TodoState.Name.ToLower() != doneStateName),
+                HighPriorityTasks = unassignedTasks.Count(t => t.Priority == TaskPriority.High && t.TodoState.Name.ToLower() != doneStateName),
+                StateCounts = unassignedTasks.GroupBy(t => t.TodoState.DisplayName)
+                    .ToDictionary(sg => sg.Key, sg => sg.Count())
+            };
+        }
+
+        // Statistics by State
+        var byState = tasks
+            .GroupBy(t => t.TodoState.DisplayName)
+            .ToDictionary(
+                g => g.Key,
+                g => g.Count()
+            );
+
+        // Trends (daily snapshots for the last N days)
+        var trends = new List<TrendDataPointDto>();
+        var currentDate = startDate;
+        var today = DateTime.UtcNow.Date;
+
+        while (currentDate <= today)
+        {
+            var nextDate = currentDate.AddDays(1);
+            
+            // Tasks created on or before this date
+            var tasksUpToDate = tasks.Where(t => t.CreatedAt.Date <= currentDate).ToList();
+            
+            // Tasks completed on or before this date
+            var completedUpToDate = tasksUpToDate
+                .Where(t => t.CompletedAt.HasValue && t.CompletedAt.Value.Date <= currentDate)
+                .ToList();
+
+            // Tasks created on this specific date
+            var tasksCreatedOnDate = tasks.Count(t => t.CreatedAt.Date == currentDate);
+            
+            // Tasks completed on this specific date
+            var tasksCompletedOnDate = tasks.Count(t => 
+                t.CompletedAt.HasValue && t.CompletedAt.Value.Date == currentDate);
+
+            // State counts for tasks up to this date
+            var stateCountsForDate = tasksUpToDate
+                .GroupBy(t => t.TodoState.DisplayName)
+                .ToDictionary(g => g.Key, g => g.Count());
+
+            trends.Add(new TrendDataPointDto
+            {
+                Date = currentDate,
+                TasksCreated = tasksCreatedOnDate,
+                TasksCompleted = tasksCompletedOnDate,
+                TotalTasks = tasksUpToDate.Count,
+                StateCounts = stateCountsForDate
+            });
+
+            currentDate = nextDate;
+        }
+
+        return new AdvancedStatsDto
+        {
+            ByUser = byUser,
+            Trends = trends,
+            ByState = byState
+        };
+    }
+
+    public async Task<bool> ReorderTasksAsync(List<int> taskIds, int? organizationId, int? userId, string? userRole)
+    {
+        if (organizationId == null || userId == null)
+        {
+            throw new UnauthorizedAccessException("User information not found");
+        }
+
+        if (taskIds == null || taskIds.Count == 0)
+        {
+            throw new InvalidOperationException("Task IDs list cannot be empty");
+        }
+
+        // Get all tasks for the organization
+        var tasks = await _context.Tasks
+            .Where(t => !t.IsDeleted && t.OrganizationId == organizationId.Value && t.ParentTaskId == null)
+            .ToListAsync();
+
+        // Validate that all provided IDs belong to this organization
+        var providedTaskIds = taskIds.ToHashSet();
+        var organizationTaskIds = tasks.Select(t => t.Id).ToHashSet();
+
+        if (!providedTaskIds.IsSubsetOf(organizationTaskIds))
+        {
+            throw new InvalidOperationException("All task IDs must belong to the organization");
+        }
+
+        // Check permissions: Users can only reorder their own tasks, Admins can reorder any tasks
+        if (userRole != "Admin")
+        {
+            var userTasks = tasks.Where(t => t.CreatedById == userId.Value).Select(t => t.Id).ToHashSet();
+            if (!providedTaskIds.IsSubsetOf(userTasks))
+            {
+                throw new UnauthorizedAccessException("You can only reorder your own tasks");
+            }
+        }
+
+        // Update order based on the provided order
+        for (int i = 0; i < taskIds.Count; i++)
+        {
+            var task = tasks.FirstOrDefault(t => t.Id == taskIds[i]);
+            if (task != null)
+            {
+                task.Order = i;
+                task.UpdatedAt = DateTime.UtcNow;
+                task.UpdatedById = userId;
+            }
+        }
+
+        await _context.SaveChangesAsync();
+
+        _logger.LogInformation("Reordered tasks for organization {OrgId} by user {UserId}",
+            organizationId, userId);
+
+        return true;
     }
 
     private static TaskDto MapToDto(Models.Task task, bool includeSubtasks = false)

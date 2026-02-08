@@ -214,6 +214,46 @@ public class TodoStateService : ITodoStateService
         return true;
     }
 
+    public async Task<bool> ReorderTodoStatesAsync(List<int> stateIds, int organizationId, int userId)
+    {
+        if (stateIds == null || stateIds.Count == 0)
+        {
+            throw new InvalidOperationException("State IDs list cannot be empty");
+        }
+
+        // Get all states for the organization
+        var states = await _context.TodoStates
+            .Where(s => s.OrganizationId == organizationId && !s.IsDeleted)
+            .ToListAsync();
+
+        // Validate that all provided IDs belong to this organization
+        var providedStateIds = stateIds.ToHashSet();
+        var organizationStateIds = states.Select(s => s.Id).ToHashSet();
+
+        if (!providedStateIds.SetEquals(organizationStateIds))
+        {
+            throw new InvalidOperationException("All state IDs must belong to the organization");
+        }
+
+        // Update order based on the provided order
+        for (int i = 0; i < stateIds.Count; i++)
+        {
+            var state = states.FirstOrDefault(s => s.Id == stateIds[i]);
+            if (state != null)
+            {
+                state.Order = i;
+                state.UpdatedAt = DateTime.UtcNow;
+            }
+        }
+
+        await _context.SaveChangesAsync();
+
+        _logger.LogInformation("Reordered todo states for organization {OrgId} by user {UserId}",
+            organizationId, userId);
+
+        return true;
+    }
+
     private static TodoStateDto MapToDto(TodoState state, int taskCount)
     {
         return new TodoStateDto

@@ -63,6 +63,71 @@ public class TasksController : ControllerBase
     }
 
     /// <summary>
+    /// Get advanced statistics (by user, trends) - Admin only
+    /// </summary>
+    [HttpGet("stats/advanced")]
+    [ProducesResponseType(typeof(AdvancedStatsDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult<AdvancedStatsDto>> GetAdvancedStats([FromQuery] int? days = 30)
+    {
+        var organizationId = _userContext.GetCurrentOrganizationId();
+        var stats = await _taskService.GetAdvancedStatsAsync(organizationId, days);
+        return Ok(stats);
+    }
+
+    /// <summary>
+    /// Reorder tasks (Admin and User - Users can only reorder their own tasks)
+    /// </summary>
+    [HttpPost("reorder")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [Authorize(Roles = "Admin,User")]
+    public async Task<IActionResult> ReorderTasks([FromBody] ReorderTasksDto reorderDto)
+    {
+        if (reorderDto == null || reorderDto.TaskIds == null || reorderDto.TaskIds.Count == 0)
+        {
+            return BadRequest(new { message = "Task IDs list is required" });
+        }
+
+        var organizationId = _userContext.GetCurrentOrganizationId();
+        var userId = _userContext.GetCurrentUserId();
+        var userRole = _userContext.GetCurrentUserRole();
+
+        if (organizationId == null || userId == null)
+        {
+            return Unauthorized(new { message = "User information not found" });
+        }
+
+        try
+        {
+            var success = await _taskService.ReorderTasksAsync(reorderDto.TaskIds, organizationId, userId, userRole);
+            if (!success)
+            {
+                return BadRequest(new { message = "Failed to reorder tasks" });
+            }
+
+            return Ok(new { message = "Tasks reordered successfully" });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Forbid(ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error reordering tasks");
+            return StatusCode(500, new { message = "An error occurred while reordering tasks" });
+        }
+    }
+
+    /// <summary>
     /// Get a specific task by ID
     /// </summary>
     [HttpGet("{id}")]

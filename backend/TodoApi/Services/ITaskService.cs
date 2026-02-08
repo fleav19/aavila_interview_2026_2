@@ -11,6 +11,8 @@ public interface ITaskService
     Task<bool> ToggleTaskStatusAsync(int id, int? organizationId, int? userId, string? userRole);
     Task<bool> DeleteTaskAsync(int id, int? organizationId, int? userId, string? userRole);
     Task<TaskStatsDto> GetTaskStatsAsync(int? organizationId);
+    Task<AdvancedStatsDto> GetAdvancedStatsAsync(int? organizationId, int? days = 30);
+    Task<bool> ReorderTasksAsync(List<int> taskIds, int? organizationId, int? userId, string? userRole);
 }
 
 public class TaskStatsDto

@@ -9,5 +9,6 @@ public interface ITodoStateService
     Task<TodoStateDto> CreateTodoStateAsync(CreateTodoStateDto createDto, int organizationId, int userId);
     Task<TodoStateDto?> UpdateTodoStateAsync(int id, UpdateTodoStateDto updateDto, int organizationId, int userId);
     Task<bool> DeleteTodoStateAsync(int id, int organizationId, int userId);
+    Task<bool> ReorderTodoStatesAsync(List<int> stateIds, int organizationId, int userId);
 }
 
