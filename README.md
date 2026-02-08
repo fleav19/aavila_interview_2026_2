@@ -97,13 +97,16 @@ Ezra/
 - ✅ **Task State Selection** - Dropdown to change task states with visual badges
 - ✅ **Task Priorities** - Low, Medium, High priority levels
 - ✅ **Due Dates** - Optional due dates with overdue detection
-- ✅ **Task Filtering** - Filter by state, assignee, completion status, search
+- ✅ **Task Filtering** - Filter by state, assignee, project, completion status, search
 - ✅ **Task Search** - Search tasks by title and description
 - ✅ **Task Sorting** - Sort by title, priority, due date, or creation date
 - ✅ **Task Assignment** - Assign tasks to team members with filtering
 - ✅ **Task Detail View** - Full task detail page with audit trail
+- ✅ **Projects** - Group tasks together in projects for better organization
+- ✅ **Subtasks** - Create subtasks to break down work into smaller pieces
 - ✅ **Soft Deletion** - Tasks are soft-deleted with audit trail
 - ✅ **Audit Trail** - Track who created/updated/deleted tasks
+- ✅ **UI Validation** - Real-time form validation with visual feedback
 
 ### Admin Features
 - ✅ **User Management** - View, update roles, activate/deactivate users
@@ -112,6 +115,7 @@ Ezra/
 - ✅ **Default State** - Configure default state for new tasks
 - ✅ **Organization Settings** - Manage organization name, slug, view statistics
 - ✅ **Organization Scoping** - All data scoped to user's organization
+- ✅ **Project Management** - Create, edit, and delete projects (Admin and User)
 
 ### User Experience
 - ✅ **Dark Mode** - Full dark mode support with theme persistence
@@ -122,6 +126,7 @@ Ezra/
 - ✅ **Responsive Design** - Works on mobile, tablet, and desktop
 - ✅ **Loading States** - Visual feedback during API calls
 - ✅ **Error Handling** - Comprehensive error handling with user feedback
+- ✅ **Form Validation** - Real-time validation with character counters and error states
 
 ### Statistics & Dashboard
 - ✅ **Task Statistics** - Total, Active, Completed, High Priority counts
@@ -267,8 +272,6 @@ See [TRADE_OFFS.md](docs/v2/TRADE_OFFS.md) for detailed trade-off documentation.
 ## 🚧 Future Enhancements
 
 ### Short-term (Next Sprint)
-- [ ] Projects - Group tasks together in projects
-- [ ] Subtasks - Create subtasks for breaking down work
 - [ ] Advanced statistics (by user, trends)
 - [ ] State reordering UI (drag-and-drop)
 - [ ] GraphQL API (deferred from initial plan)

@@ -99,7 +99,7 @@ This document captures user stories organized by role to help identify functiona
 - Can view project details (name, description, task count)
 - Cannot create, edit, or delete projects
 
-**Status**: ❌ Not Implemented
+**Status**: ✅ Implemented
 
 ---
 
@@ -113,7 +113,7 @@ This document captures user stories organized by role to help identify functiona
 - Can see subtask title, state, assignee
 - Cannot create, edit, or delete subtasks
 
-**Status**: ❌ Not Implemented
+**Status**: ✅ Implemented
 
 ---
 
@@ -131,7 +131,7 @@ This document captures user stories organized by role to help identify functiona
 - Filters persist while browsing
 - Clear visual indication of active filters
 
-**Status**: ⚠️ Partially Implemented (basic filtering implemented, missing: project filter)
+**Status**: ✅ Implemented (includes project filter)
 
 ---
 
@@ -240,7 +240,7 @@ This document captures user stories organized by role to help identify functiona
 - On success, task appears in list
 - On error, clear error message displayed
 
-**Status**: ✅ Implemented (but missing: assignee selection, state selection)
+**Status**: ✅ Implemented (includes assignee selection, state selection, project selection, and real-time validation)
 
 ---
 
@@ -387,7 +387,7 @@ This document captures user stories organized by role to help identify functiona
 - Can delete projects (if no tasks assigned, or with confirmation)
 - Projects are scoped to my organization
 
-**Status**: ❌ Not Implemented
+**Status**: ✅ Implemented
 
 ---
 
@@ -406,7 +406,7 @@ This document captures user stories organized by role to help identify functiona
 - Subtasks inherit organization and project from parent task
 - Can see subtask progress (e.g., 3 of 5 complete)
 
-**Status**: ❌ Not Implemented
+**Status**: ✅ Implemented
 
 ---
 
@@ -552,7 +552,7 @@ This document captures user stories organized by role to help identify functiona
 - Order persists across sessions
 - Can drag and drop or use up/down buttons
 
-**Status**: ❌ Not Implemented
+**Status**: ✅ Implemented
 
 ---
 
@@ -608,17 +608,15 @@ This document captures user stories organized by role to help identify functiona
 
 ### ✅ Fully Implemented
 - Guest: Landing page, registration, login
-- Viewer: View tasks, filter/search, view stats, read-only enforcement, view todo states, task detail view
-- User: Create/edit/delete own tasks, view tasks, filter/search (by state, assignee, status), assign tasks, view assigned tasks, logout, view profile, select task state, task detail view
-- Admin: All user capabilities, edit/delete any task, manage user roles, activate/deactivate users, manage todo states (CRUD), organization settings management
+- Viewer: View tasks, filter/search, view stats, read-only enforcement, view todo states, task detail view, view projects, view subtasks
+- User: Create/edit/delete own tasks, view tasks, filter/search (by state, assignee, project, status), assign tasks, view assigned tasks, logout, view profile, select task state, task detail view, create/manage projects, create/manage subtasks
+- Admin: All user capabilities, edit/delete any task, manage user roles, activate/deactivate users, manage todo states (CRUD), organization settings management, manage projects, manage subtasks
 
 ### ⚠️ Partially Implemented
 - Admin: Default state (set in seeder, can set when creating/editing states but no dedicated UI to change existing default), statistics (basic only, missing: by user, by state, trends)
 
 ### ❌ Not Implemented
-- Viewer: View projects, View subtasks
-- User: Create and manage projects, Create and manage subtasks
-- Admin: Advanced statistics (by user, by state, trends), State reordering UI (drag-and-drop), Manage projects (all users), Manage subtasks (all tasks)
+- Admin: Advanced statistics (by user, by state, trends), State reordering UI (drag-and-drop)
 - All: GraphQL API (deferred)
 
 ---
@@ -629,10 +627,8 @@ This document captures user stories organized by role to help identify functiona
 - None (all core features implemented)
 
 ### Medium Priority (Nice to Have)
-1. **Projects** (User/Admin) - US-USER-011, US-ADMIN-013 (group tasks together)
-2. **Subtasks** (User/Admin) - US-USER-012, US-ADMIN-014 (break down tasks)
-3. **Advanced Statistics** (Admin) - US-ADMIN-011 (by user, by state, trends)
-4. **State Reordering UI** (Admin) - US-ADMIN-009 (drag-and-drop interface)
+1. **Advanced Statistics** (Admin) - US-ADMIN-011 (by user, by state, trends)
+2. **State Reordering UI** (Admin) - US-ADMIN-009 (drag-and-drop interface)
 
 ### Low Priority (Polish)
 1. **State Reordering UI** (Admin) - US-ADMIN-009

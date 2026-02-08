@@ -580,8 +580,9 @@ This document explicitly defines features, capabilities, and requirements that a
 - ✅ Internationalization - ✅ Implemented
 - ✅ User preferences - ✅ Implemented
 - ✅ Routing - ✅ Implemented
-- 📋 Projects (grouping tasks) - Planned for MVP
-- 📋 Subtasks (parent-child relationships) - Planned for MVP
+- ✅ Projects (grouping tasks) - ✅ Implemented
+- ✅ Subtasks (parent-child relationships) - ✅ Implemented
+- ✅ UI Validation - ✅ Implemented (real-time form validation with visual feedback)
 - ⏸️ GraphQL API - Deferred to Phase 2
 
 **Note on MVP Flexibility**: The MVP implementation of Projects and Subtasks provides a solid foundation for task organization. While we could add more advanced features (e.g., nested project hierarchies, complex subtask dependencies, project templates), the current MVP scope balances functionality with implementation complexity. This provides a great starting point that can be extended based on user feedback and needs.

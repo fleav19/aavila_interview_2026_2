@@ -250,9 +250,10 @@ Repository link exists, but should verify it's complete and accessible.
 - **Organization Settings**: Admin UI for managing organization with statistics
 - **Routing**: URL-based navigation with React Router
 
-### Planned for MVP: 📋
-- **Projects**: Group tasks together in projects for better organization
-- **Subtasks**: Create subtasks to break down work into smaller pieces
+### Implemented: ✅
+- **Projects**: Group tasks together in projects for better organization - ✅ **IMPLEMENTED**
+- **Subtasks**: Create subtasks to break down work into smaller pieces - ✅ **IMPLEMENTED**
+- **UI Validation**: Real-time form validation with visual feedback - ✅ **IMPLEMENTED**
 
 **Note on MVP Flexibility**: The MVP implementation of Projects and Subtasks provides a solid foundation. While we could add more advanced features (e.g., nested project hierarchies, complex subtask dependencies, project templates), the current MVP scope balances functionality with implementation complexity. This provides a great starting point that can be extended based on user feedback.
 
