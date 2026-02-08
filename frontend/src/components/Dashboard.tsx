@@ -5,6 +5,7 @@ import { useI18n } from '../contexts/I18nContext';
 import { TaskList } from './TaskList';
 import { TaskStats } from './TaskStats';
 import { TodoStateList } from './TodoStateList';
+import { ProjectList } from './ProjectList';
 import { UserManagementList } from './UserManagementList';
 import { OrganizationSettings } from './OrganizationSettings';
 import { UserMenu } from './UserMenu';
@@ -25,6 +26,7 @@ export const Dashboard = () => {
     const path = location.pathname;
     if (path === '/users') return 'users';
     if (path === '/states') return 'states';
+    if (path === '/projects') return 'projects';
     if (path === '/organization') return 'organization';
     return 'tasks'; // default
   };
@@ -32,13 +34,15 @@ export const Dashboard = () => {
   const activeTab = getActiveTab();
 
   // Handle tab navigation
-  const handleTabChange = (tab: 'tasks' | 'users' | 'states' | 'organization') => {
+  const handleTabChange = (tab: 'tasks' | 'users' | 'states' | 'projects' | 'organization') => {
     if (tab === 'tasks') {
       navigate('/tasks');
     } else if (tab === 'users' && isAdmin) {
       navigate('/users');
     } else if (tab === 'states' && isAdmin) {
       navigate('/states');
+    } else if (tab === 'projects') {
+      navigate('/projects');
     } else if (tab === 'organization' && isAdmin) {
       navigate('/organization');
     }
@@ -85,6 +89,16 @@ export const Dashboard = () => {
             >
               {t('nav.tasks')}
             </button>
+            <button
+              onClick={() => handleTabChange('projects')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'projects'
+                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
+              }`}
+            >
+              Projects
+            </button>
             {isAdmin && (
               <>
                 <button
@@ -128,6 +142,8 @@ export const Dashboard = () => {
             <TaskStats showSettings={showStatsSettings} onSettingsClose={() => setShowStatsSettings(false)} />
             <TaskList />
           </>
+        ) : activeTab === 'projects' ? (
+          <ProjectList />
         ) : activeTab === 'users' ? (
           <UserManagementList />
         ) : activeTab === 'states' ? (

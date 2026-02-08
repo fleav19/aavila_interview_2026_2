@@ -13,6 +13,7 @@ public class TodoDbContext : DbContext
     public DbSet<Role> Roles { get; set; }
     public DbSet<User> Users { get; set; }
     public DbSet<TodoState> TodoStates { get; set; }
+    public DbSet<Project> Projects { get; set; }
     public DbSet<Models.Task> Tasks { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -103,6 +104,41 @@ public class TodoDbContext : DbContext
                   .OnDelete(DeleteBehavior.Restrict);
         });
 
+        // Project configuration
+        modelBuilder.Entity<Project>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.Description).HasMaxLength(1000);
+            entity.Property(e => e.CreatedAt).IsRequired();
+            entity.Property(e => e.UpdatedAt).IsRequired();
+            entity.HasIndex(e => e.OrganizationId);
+            entity.HasIndex(e => e.CreatedById);
+            entity.HasIndex(e => e.IsDeleted);
+            entity.HasIndex(e => new { e.OrganizationId, e.Name }).IsUnique();
+
+            // Relationships
+            entity.HasOne(e => e.Organization)
+                  .WithMany()
+                  .HasForeignKey(e => e.OrganizationId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.CreatedBy)
+                  .WithMany()
+                  .HasForeignKey(e => e.CreatedById)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.UpdatedBy)
+                  .WithMany()
+                  .HasForeignKey(e => e.UpdatedById)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.DeletedBy)
+                  .WithMany()
+                  .HasForeignKey(e => e.DeletedById)
+                  .OnDelete(DeleteBehavior.Restrict);
+        });
+
         // Task configuration
         modelBuilder.Entity<Models.Task>(entity =>
         {
@@ -114,11 +150,14 @@ public class TodoDbContext : DbContext
             entity.HasIndex(e => e.TodoStateId);
             entity.HasIndex(e => e.CreatedById);
             entity.HasIndex(e => e.AssignedToId);
+            entity.HasIndex(e => e.ProjectId);
+            entity.HasIndex(e => e.ParentTaskId);
             entity.HasIndex(e => e.OrganizationId);
             entity.HasIndex(e => e.CreatedAt);
             entity.HasIndex(e => e.IsDeleted);
             entity.HasIndex(e => new { e.OrganizationId, e.TodoStateId });
             entity.HasIndex(e => new { e.OrganizationId, e.IsDeleted });
+            entity.HasIndex(e => new { e.OrganizationId, e.ProjectId });
 
             // Relationships
             entity.HasOne(e => e.TodoState)
@@ -149,6 +188,16 @@ public class TodoDbContext : DbContext
             entity.HasOne(e => e.Organization)
                   .WithMany(o => o.Tasks)
                   .HasForeignKey(e => e.OrganizationId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.Project)
+                  .WithMany(p => p.Tasks)
+                  .HasForeignKey(e => e.ProjectId)
+                  .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(e => e.ParentTask)
+                  .WithMany(t => t.Subtasks)
+                  .HasForeignKey(e => e.ParentTaskId)
                   .OnDelete(DeleteBehavior.Restrict);
         });
     }

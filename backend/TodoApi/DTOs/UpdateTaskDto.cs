@@ -18,5 +18,7 @@ public class UpdateTaskDto
     public int? TodoStateId { get; set; } // Optional - will keep current state if not provided
     
     public int? AssignedToId { get; set; } // Optional - assign or reassign task to a user
+    public int? ProjectId { get; set; } // Optional - assign or reassign task to a project
+    public int? ParentTaskId { get; set; } // Optional - make this task a subtask of another task
 }
 

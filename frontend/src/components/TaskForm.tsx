@@ -3,8 +3,10 @@ import { useForm } from 'react-hook-form';
 import { useTasks } from '../contexts/TaskContext';
 import { todoStateApi } from '../services/todoStateApi';
 import { usersApi } from '../services/usersApi';
+import { projectApi } from '../services/projectApi';
 import type { Task, CreateTaskDto, UpdateTaskDto } from '../types/task';
 import type { TodoState } from '../types/todoState';
+import type { Project } from '../types/project';
 
 interface TaskFormProps {
   task?: Task;
@@ -12,31 +14,37 @@ interface TaskFormProps {
   onSubmitSuccess?: () => void;
 }
 
-type FormData = CreateTaskDto;
+type TaskFormData = CreateTaskDto;
 
 export const TaskForm = ({ task, onCancel, onSubmitSuccess }: TaskFormProps) => {
   const { createTask, updateTask } = useTasks();
-  const isEditMode = !!task;
+  // isEditMode is true only if task exists AND has a valid id (not 0, which indicates new subtask)
+  const isEditMode = !!task && task.id > 0;
   const [states, setStates] = useState<TodoState[]>([]);
   const [loadingStates, setLoadingStates] = useState(true);
   const [users, setUsers] = useState<Array<{ id: number; name: string }>>([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loadingProjects, setLoadingProjects] = useState(true);
 
-  // Load todo states and users
+  // Load todo states, users, and projects
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [statesData, usersData] = await Promise.all([
+        const [statesData, usersData, projectsData] = await Promise.all([
           todoStateApi.getAll(),
           usersApi.getForAssignment(), // All authenticated users can get users for assignment
+          projectApi.getAll(),
         ]);
         setStates(statesData.sort((a, b) => a.order - b.order));
         setUsers(usersData.map(u => ({ id: u.id, name: `${u.firstName} ${u.lastName}` })));
+        setProjects(projectsData);
       } catch (err) {
-        console.error('Failed to load todo states or users:', err);
+        console.error('Failed to load todo states, users, or projects:', err);
       } finally {
         setLoadingStates(false);
         setLoadingUsers(false);
+        setLoadingProjects(false);
       }
     };
     loadData();
@@ -44,13 +52,7 @@ export const TaskForm = ({ task, onCancel, onSubmitSuccess }: TaskFormProps) => 
 
   const defaultState = states.find(s => s.isDefault);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting, isValid, touchedFields },
-    reset,
-    watch,
-  } = useForm<FormData & { todoStateId?: number; assignedToId?: number | null; dueDate?: string }>({
+  const { register, handleSubmit, watch, reset, formState: { errors } } = useForm<TaskFormData & { todoStateId?: number; assignedToId?: number | null; projectId?: number | null; parentTaskId?: number | null; dueDate?: string }>({
     mode: 'onChange', // Validate on change for real-time feedback
     reValidateMode: 'onChange', // Re-validate on change
     defaultValues: task
@@ -61,6 +63,8 @@ export const TaskForm = ({ task, onCancel, onSubmitSuccess }: TaskFormProps) => 
           priority: task.priority,
           todoStateId: task.todoStateId,
           assignedToId: task.assignedToId || null,
+          projectId: task.projectId || null,
+          parentTaskId: task.parentTaskId || null,
         }
       : {
           title: '',
@@ -69,6 +73,8 @@ export const TaskForm = ({ task, onCancel, onSubmitSuccess }: TaskFormProps) => 
           priority: 1,
           todoStateId: defaultState?.id,
           assignedToId: null,
+          projectId: null,
+          parentTaskId: task?.parentTaskId || null, // Allow creating subtask from TaskDetail
         },
   });
 
@@ -85,11 +91,25 @@ export const TaskForm = ({ task, onCancel, onSubmitSuccess }: TaskFormProps) => 
         priority: task.priority,
         todoStateId: task.todoStateId,
         assignedToId: task.assignedToId || null,
+        projectId: task.projectId || null,
+        parentTaskId: task.parentTaskId || null,
+      });
+    } else if (task && task.parentTaskId && !task.id) {
+      // Creating a new subtask (task has parentTaskId but no id)
+      reset({
+        title: '',
+        description: '',
+        dueDate: '',
+        priority: 1,
+        todoStateId: defaultState?.id,
+        assignedToId: null,
+        projectId: task.projectId || null, // Inherit project from parent
+        parentTaskId: task.parentTaskId,
       });
     }
-  }, [task, states, reset]);
+  }, [task, states, reset, defaultState]);
 
-  const onSubmit = async (data: FormData) => {
+  const onSubmit = async (data: TaskFormData) => {
     try {
       // Format dueDate properly - only include if provided
       let dueDate: string | undefined = undefined;
@@ -132,6 +152,19 @@ export const TaskForm = ({ task, onCancel, onSubmitSuccess }: TaskFormProps) => 
         taskData.assignedToId = data.assignedToId || null;
       }
 
+      // Add project if provided
+      if (data.projectId !== undefined) {
+        taskData.projectId = data.projectId || null;
+      }
+
+      // Add parentTaskId if provided (only for new tasks, or when explicitly changing)
+      if (!isEditMode && data.parentTaskId) {
+        taskData.parentTaskId = data.parentTaskId;
+      } else if (isEditMode && task && data.parentTaskId !== undefined) {
+        // Allow removing parent (making it a top-level task) or changing parent
+        taskData.parentTaskId = data.parentTaskId || null;
+      }
+
       if (isEditMode && task) {
         await updateTask(task.id, taskData);
       } else {
@@ -148,8 +181,15 @@ export const TaskForm = ({ task, onCancel, onSubmitSuccess }: TaskFormProps) => 
   return (
     <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
       <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">
-        {isEditMode ? 'Edit Task' : 'Create New Task'}
+        {isEditMode ? 'Edit Task' : task?.parentTaskId ? 'Create New Subtask' : 'Create New Task'}
       </h2>
+      {!isEditMode && task?.parentTaskId && (
+        <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md">
+          <p className="text-sm text-blue-800 dark:text-blue-200">
+            📋 Creating a subtask for: <strong>{task.title || 'Parent Task'}</strong>
+          </p>
+        </div>
+      )}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -215,7 +255,7 @@ export const TaskForm = ({ task, onCancel, onSubmitSuccess }: TaskFormProps) => 
           </div>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               State
@@ -232,6 +272,31 @@ export const TaskForm = ({ task, onCancel, onSubmitSuccess }: TaskFormProps) => 
                 {states.map((state) => (
                   <option key={state.id} value={state.id}>
                     {state.displayName}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Project
+            </label>
+            {loadingProjects ? (
+              <div className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white">
+                Loading projects...
+              </div>
+            ) : (
+              <select
+                {...register('projectId', { 
+                  setValueAs: (value) => value === '' || value === 'none' ? null : Number(value)
+                })}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="none">No Project</option>
+                {projects.map((project) => (
+                  <option key={project.id} value={project.id}>
+                    {project.name}
                   </option>
                 ))}
               </select>

@@ -114,6 +114,11 @@ export const TaskItem = ({ task, onEdit, onView }: TaskItemProps) => {
             </p>
           )}
           <div className="flex items-center gap-4 mt-3 text-xs text-gray-500 dark:text-gray-400">
+            {task.projectName && (
+              <span className="text-purple-600 dark:text-purple-400 font-medium">
+                📁 {task.projectName}
+              </span>
+            )}
             {task.assignedToName && (
               <span className="text-blue-600 dark:text-blue-400 font-medium">
                 Assigned to: {task.assignedToName}

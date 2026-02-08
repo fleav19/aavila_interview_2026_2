@@ -10,9 +10,10 @@ interface TaskDetailProps {
   taskId: number;
   onClose: () => void;
   onEdit: (task: Task) => void;
+  onCreateSubtask?: (parentTaskId: number) => void;
 }
 
-export const TaskDetail = ({ taskId, onClose, onEdit }: TaskDetailProps) => {
+export const TaskDetail = ({ taskId, onClose, onEdit, onCreateSubtask }: TaskDetailProps) => {
   const { deleteTask } = useTasks();
   const { theme } = useTheme();
   const isDark = theme === 'dark';
@@ -135,6 +136,71 @@ export const TaskDetail = ({ taskId, onClose, onEdit }: TaskDetailProps) => {
                 Description
               </h3>
               <p className="text-gray-900 dark:text-white whitespace-pre-wrap">{task.description}</p>
+            </div>
+          )}
+
+          {/* Project */}
+          {task.projectName && (
+            <div>
+              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">
+                Project
+              </h3>
+              <p className="text-gray-900 dark:text-white">
+                <span className="text-purple-600 dark:text-purple-400 font-medium">
+                  📁 {task.projectName}
+                </span>
+              </p>
+            </div>
+          )}
+
+          {/* Parent Task */}
+          {task.parentTaskTitle && (
+            <div>
+              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">
+                Parent Task
+              </h3>
+              <p className="text-gray-900 dark:text-white">
+                <span className="text-gray-600 dark:text-gray-400">
+                  ↳ {task.parentTaskTitle}
+                </span>
+              </p>
+            </div>
+          )}
+
+          {/* Subtasks */}
+          {task.subtasks && task.subtasks.length > 0 && (
+            <div>
+              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">
+                Subtasks ({task.subtasks.length})
+              </h3>
+              <div className="space-y-2">
+                {task.subtasks.map((subtask) => (
+                  <div
+                    key={subtask.id}
+                    className="bg-gray-50 dark:bg-gray-700 p-3 rounded border border-gray-200 dark:border-gray-600"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">
+                          ↳ {subtask.title}
+                        </p>
+                        {subtask.todoStateDisplayName && (
+                          <span
+                            className="inline-block mt-1 px-2 py-0.5 text-xs font-medium rounded border"
+                            style={{
+                              backgroundColor: subtask.todoStateColor ? `${subtask.todoStateColor}20` : '#F3F4F6',
+                              borderColor: subtask.todoStateColor || '#D1D5DB',
+                              color: subtask.todoStateColor || '#374151',
+                            }}
+                          >
+                            {subtask.todoStateDisplayName}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 

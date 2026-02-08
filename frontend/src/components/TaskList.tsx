@@ -15,6 +15,7 @@ export const TaskList = () => {
   const [isCompleted, setIsCompleted] = useState<boolean | undefined>(undefined);
   const [todoStateId, setTodoStateId] = useState<number | undefined>(undefined);
   const [assignedToId, setAssignedToId] = useState<number | undefined>(undefined);
+  const [projectId, setProjectId] = useState<number | undefined>(undefined);
   const [showForm, setShowForm] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | undefined>(undefined);
   const [viewingTaskId, setViewingTaskId] = useState<number | null>(null);
@@ -23,9 +24,9 @@ export const TaskList = () => {
     // Handle special case: -1 means unassigned
     const assigneeFilter = assignedToId === -1 ? undefined : assignedToId;
     const unassignedOnly = assignedToId === -1 ? true : undefined;
-    fetchTasks(filter || undefined, sortBy, isCompleted, todoStateId, assigneeFilter, unassignedOnly);
+    fetchTasks(filter || undefined, sortBy, isCompleted, todoStateId, assigneeFilter, unassignedOnly, projectId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filter, sortBy, isCompleted, todoStateId, assignedToId]);
+  }, [filter, sortBy, isCompleted, todoStateId, assignedToId, projectId]);
 
   const handleEdit = (task: Task) => {
     setEditingTask(task);
@@ -34,6 +35,23 @@ export const TaskList = () => {
 
   const handleView = (task: Task) => {
     setViewingTaskId(task.id);
+  };
+
+  const handleCreateSubtask = (parentTaskId: number) => {
+    // Create a dummy task object with parentTaskId set to indicate we're creating a subtask
+    const parentTask = tasks.find(t => t.id === parentTaskId);
+    if (parentTask) {
+      // Create a new task object with parentTaskId set, but no id (so it's treated as new)
+      setEditingTask({ 
+        ...parentTask, 
+        id: 0, 
+        title: '', 
+        description: '',
+        parentTaskId: parentTaskId,
+        projectId: parentTask.projectId || null, // Inherit project
+      } as Task);
+      setShowForm(true);
+    }
   };
 
   const handleFormSuccess = () => {
@@ -78,11 +96,13 @@ export const TaskList = () => {
             isCompleted={isCompleted}
             todoStateId={todoStateId}
             assignedToId={assignedToId}
+            projectId={projectId}
             onFilterChange={setFilter}
             onSortChange={setSortBy}
             onStatusChange={setIsCompleted}
             onStateChange={setTodoStateId}
             onAssigneeChange={setAssignedToId}
+            onProjectChange={setProjectId}
           />
 
           {loading && <LoadingSpinner message="Refreshing..." />}
@@ -109,6 +129,7 @@ export const TaskList = () => {
           taskId={viewingTaskId}
           onClose={() => setViewingTaskId(null)}
           onEdit={handleEdit}
+          onCreateSubtask={handleCreateSubtask}
         />
       )}
     </div>

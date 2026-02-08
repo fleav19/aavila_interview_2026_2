@@ -4,7 +4,7 @@ namespace TodoApi.Services;
 
 public interface ITaskService
 {
-    Task<IEnumerable<TaskDto>> GetAllTasksAsync(string? filter, string? sortBy, bool? isCompleted, int? todoStateId, int? assignedToId, bool? unassignedOnly, int? organizationId, int? userId, string? userRole);
+    Task<IEnumerable<TaskDto>> GetAllTasksAsync(string? filter, string? sortBy, bool? isCompleted, int? todoStateId, int? assignedToId, bool? unassignedOnly, int? projectId, int? organizationId, int? userId, string? userRole);
     Task<TaskDto?> GetTaskByIdAsync(int id, int? organizationId, int? userId, string? userRole);
     Task<TaskDto> CreateTaskAsync(CreateTaskDto createTaskDto, int userId, int organizationId);
     Task<TaskDto?> UpdateTaskAsync(int id, UpdateTaskDto updateTaskDto, int? organizationId, int? userId, string? userRole);

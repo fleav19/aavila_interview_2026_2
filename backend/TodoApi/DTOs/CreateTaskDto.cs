@@ -18,6 +18,8 @@ public class CreateTaskDto
     public int? TodoStateId { get; set; } // Optional - will use default state if not provided
     
     public int? AssignedToId { get; set; } // Optional - assign task to a user in the organization
+    public int? ProjectId { get; set; } // Optional - assign task to a project
+    public int? ParentTaskId { get; set; } // Optional - create as subtask of another task
 }
 
 public enum TaskPriorityDto

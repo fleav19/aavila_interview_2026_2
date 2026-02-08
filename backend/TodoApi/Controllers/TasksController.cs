@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TodoApi.DTOs;
 using TodoApi.Services;
+using System.Text.Json;
 
 namespace TodoApi.Controllers;
 
@@ -37,13 +38,14 @@ public class TasksController : ControllerBase
         [FromQuery] bool? isCompleted = null,
         [FromQuery] int? todoStateId = null,
         [FromQuery] int? assignedToId = null,
-        [FromQuery] bool? unassignedOnly = null)
+        [FromQuery] bool? unassignedOnly = null,
+        [FromQuery] int? projectId = null)
     {
         var organizationId = _userContext.GetCurrentOrganizationId();
         var userId = _userContext.GetCurrentUserId();
         var userRole = _userContext.GetCurrentUserRole();
 
-        var tasks = await _taskService.GetAllTasksAsync(filter, sortBy, isCompleted, todoStateId, assignedToId, unassignedOnly, organizationId, userId, userRole);
+        var tasks = await _taskService.GetAllTasksAsync(filter, sortBy, isCompleted, todoStateId, assignedToId, unassignedOnly, projectId, organizationId, userId, userRole);
         return Ok(tasks);
     }
 
@@ -89,8 +91,51 @@ public class TasksController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [Authorize(Roles = "Admin,User")] // Viewers cannot create tasks
-    public async Task<ActionResult<TaskDto>> CreateTask([FromBody] CreateTaskDto createTaskDto)
+    public async Task<ActionResult<TaskDto>> CreateTask([FromBody] CreateTaskDto? createTaskDto)
     {
+        // #region agent log
+        var logPath = "/Users/aavila/code/interviews/.cursor/debug.log";
+        try
+        {
+            var modelStateErrors = ModelState.Where(x => x.Value?.Errors.Count > 0)
+                .SelectMany(x => x.Value!.Errors.Select(e => new { Field = x.Key, Message = e.ErrorMessage }))
+                .ToList();
+            var logEntry = new { 
+                location = "TasksController.cs:93", 
+                message = "CreateTask called", 
+                data = new { 
+                    createTaskDtoIsNull = createTaskDto == null,
+                    createTaskDto = createTaskDto != null ? new { 
+                        title = createTaskDto.Title, 
+                        priority = createTaskDto.Priority.ToString(),
+                        priorityValue = (int)createTaskDto.Priority
+                    } : null, 
+                    modelStateErrors = modelStateErrors,
+                    modelStateKeys = ModelState.Keys.ToList()
+                }, 
+                timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), 
+                runId = "initial", 
+                hypothesisId = "A" 
+            };
+            System.IO.File.AppendAllText(logPath, System.Text.Json.JsonSerializer.Serialize(logEntry) + "\n");
+        }
+        catch (Exception ex)
+        {
+            try
+            {
+                var logEntry = new { location = "TasksController.cs:110", message = "Error in logging", data = new { error = ex.Message }, timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), runId = "initial", hypothesisId = "A" };
+                System.IO.File.AppendAllText(logPath, System.Text.Json.JsonSerializer.Serialize(logEntry) + "\n");
+            }
+            catch { }
+        }
+        // #endregion
+
+        if (createTaskDto == null)
+        {
+            _logger.LogWarning("CreateTask called with null createTaskDto");
+            return BadRequest(new { message = "Request body is required" });
+        }
+
         if (!ModelState.IsValid)
         {
             var errors = ModelState

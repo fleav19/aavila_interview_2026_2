@@ -51,6 +51,7 @@ export const taskApi = {
     todoStateId?: number;
     assignedToId?: number;
     unassignedOnly?: boolean;
+    projectId?: number;
   }): Promise<Task[]> => {
     const response = await api.get<Task[]>('/tasks', { params });
     return response.data;

@@ -29,6 +29,17 @@ function App() {
                 }
               />
 
+              <Route
+                path="/projects"
+                element={
+                  <ProtectedRoute>
+                    <TaskProvider>
+                      <Dashboard />
+                    </TaskProvider>
+                  </ProtectedRoute>
+                }
+              />
+
               {/* Admin-only routes */}
               <Route
                 path="/users"
