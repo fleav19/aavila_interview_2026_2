@@ -47,10 +47,12 @@ export const TaskForm = ({ task, onCancel, onSubmitSuccess }: TaskFormProps) => 
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isValid, touchedFields },
     reset,
     watch,
-  } = useForm<FormData & { todoStateId?: number; assignedToId?: number | null }>({
+  } = useForm<FormData & { todoStateId?: number; assignedToId?: number | null; dueDate?: string }>({
+    mode: 'onChange', // Validate on change for real-time feedback
+    reValidateMode: 'onChange', // Re-validate on change
     defaultValues: task
       ? {
           title: task.title,
@@ -69,6 +71,10 @@ export const TaskForm = ({ task, onCancel, onSubmitSuccess }: TaskFormProps) => 
           assignedToId: null,
         },
   });
+
+  const titleValue = watch('title');
+  const descriptionValue = watch('description');
+  const dueDateValue = watch('dueDate');
 
   useEffect(() => {
     if (task && states.length > 0) {
@@ -147,19 +153,39 @@ export const TaskForm = ({ task, onCancel, onSubmitSuccess }: TaskFormProps) => 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Title *
+            Title <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
             {...register('title', {
               required: 'Title is required',
+              minLength: { value: 1, message: 'Title cannot be empty' },
               maxLength: { value: 200, message: 'Title must be less than 200 characters' },
+              validate: {
+                notWhitespace: (value) => {
+                  if (!value || value.trim().length === 0) {
+                    return 'Title cannot be only whitespace';
+                  }
+                  return true;
+                },
+              },
             })}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className={`w-full px-3 py-2 border rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 transition-colors ${
+              errors.title
+                ? 'border-red-500 dark:border-red-500 focus:ring-red-500'
+                : 'border-gray-300 dark:border-gray-600 focus:ring-blue-500'
+            }`}
+            placeholder="Enter task title..."
           />
-          {errors.title && (
-            <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.title.message}</p>
-          )}
+          <div className="flex justify-between items-center mt-1">
+            {errors.title ? (
+              <p className="text-sm text-red-600 dark:text-red-400">{errors.title.message}</p>
+            ) : (
+              <p className="text-sm text-gray-400 dark:text-gray-500">
+                {titleValue?.trim().length || 0} / 200 characters
+              </p>
+            )}
+          </div>
         </div>
 
         <div>
@@ -171,11 +197,22 @@ export const TaskForm = ({ task, onCancel, onSubmitSuccess }: TaskFormProps) => 
               maxLength: { value: 1000, message: 'Description must be less than 1000 characters' },
             })}
             rows={3}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className={`w-full px-3 py-2 border rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 transition-colors ${
+              errors.description
+                ? 'border-red-500 dark:border-red-500 focus:ring-red-500'
+                : 'border-gray-300 dark:border-gray-600 focus:ring-blue-500'
+            }`}
+            placeholder="Enter task description (optional)..."
           />
-          {errors.description && (
-            <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.description.message}</p>
-          )}
+          <div className="flex justify-between items-center mt-1">
+            {errors.description ? (
+              <p className="text-sm text-red-600 dark:text-red-400">{errors.description.message}</p>
+            ) : (
+              <p className="text-sm text-gray-400 dark:text-gray-500">
+                {descriptionValue?.length || 0} / 1000 characters
+              </p>
+            )}
+          </div>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -232,33 +269,101 @@ export const TaskForm = ({ task, onCancel, onSubmitSuccess }: TaskFormProps) => 
             </label>
             <input
               type="date"
-              {...register('dueDate')}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              {...register('dueDate', {
+                validate: {
+                  notPast: (value) => {
+                    if (!value) return true; // Optional field
+                    const selectedDate = new Date(value);
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    if (selectedDate < today) {
+                      return 'Due date cannot be in the past';
+                    }
+                    return true;
+                  },
+                  validDate: (value) => {
+                    if (!value) return true; // Optional field
+                    const date = new Date(value);
+                    return !isNaN(date.getTime()) || 'Please enter a valid date';
+                  },
+                },
+              })}
+              min={new Date().toISOString().split('T')[0]} // Prevent selecting past dates in date picker
+              className={`w-full px-3 py-2 border rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 transition-colors ${
+                errors.dueDate
+                  ? 'border-red-500 dark:border-red-500 focus:ring-red-500'
+                  : 'border-gray-300 dark:border-gray-600 focus:ring-blue-500'
+              }`}
             />
+            {errors.dueDate && (
+              <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.dueDate.message}</p>
+            )}
+            {dueDateValue && !errors.dueDate && (
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                Due: {new Date(dueDateValue).toLocaleDateString()}
+              </p>
+            )}
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Priority *
+              Priority <span className="text-red-500">*</span>
             </label>
             <select
-              {...register('priority', { required: true })}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              {...register('priority', { 
+                required: 'Priority is required',
+                valueAsNumber: true,
+              })}
+              className={`w-full px-3 py-2 border rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 transition-colors ${
+                errors.priority
+                  ? 'border-red-500 dark:border-red-500 focus:ring-red-500'
+                  : 'border-gray-300 dark:border-gray-600 focus:ring-blue-500'
+              }`}
             >
               <option value={0}>Low</option>
               <option value={1}>Medium</option>
               <option value={2}>High</option>
             </select>
+            {errors.priority && (
+              <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.priority.message}</p>
+            )}
           </div>
         </div>
+
+        {/* Validation Summary - Only show if there are errors and user has interacted */}
+        {Object.keys(errors).length > 0 && Object.keys(touchedFields).length > 0 && (
+          <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md">
+            <p className="text-sm font-medium text-red-800 dark:text-red-200 mb-1">
+              Please fix the following errors:
+            </p>
+            <ul className="list-disc list-inside text-sm text-red-700 dark:text-red-300 space-y-1">
+              {errors.title && <li>{errors.title.message}</li>}
+              {errors.description && <li>{errors.description.message}</li>}
+              {errors.dueDate && <li>{errors.dueDate.message}</li>}
+              {errors.priority && <li>{errors.priority.message}</li>}
+            </ul>
+          </div>
+        )}
 
         <div className="flex gap-3 pt-4">
           <button
             type="submit"
-            disabled={isSubmitting}
-            className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 dark:hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            disabled={isSubmitting || (!isEditMode && (!isValid || !titleValue?.trim()))}
+            className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 dark:hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
           >
-            {isSubmitting ? 'Saving...' : isEditMode ? 'Update Task' : 'Create Task'}
+            {isSubmitting ? (
+              <span className="flex items-center justify-center">
+                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Saving...
+              </span>
+            ) : isEditMode ? (
+              'Update Task'
+            ) : (
+              'Create Task'
+            )}
           </button>
           <button
             type="button"
@@ -272,4 +377,5 @@ export const TaskForm = ({ task, onCancel, onSubmitSuccess }: TaskFormProps) => 
     </div>
   );
 };
+
 
