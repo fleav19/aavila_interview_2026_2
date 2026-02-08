@@ -16,7 +16,7 @@ public class TaskService : ITaskService
         _logger = logger;
     }
 
-    public async Task<IEnumerable<TaskDto>> GetAllTasksAsync(string? filter, string? sortBy, bool? isCompleted, int? todoStateId, int? organizationId, int? userId, string? userRole)
+    public async Task<IEnumerable<TaskDto>> GetAllTasksAsync(string? filter, string? sortBy, bool? isCompleted, int? todoStateId, int? assignedToId, bool? unassignedOnly, int? organizationId, int? userId, string? userRole)
     {
         if (organizationId == null)
         {
@@ -25,6 +25,8 @@ public class TaskService : ITaskService
 
         var query = _context.Tasks
             .Include(t => t.TodoState)
+            .Include(t => t.AssignedTo)
+            .Include(t => t.CreatedBy)
             .Where(t => !t.IsDeleted && t.OrganizationId == organizationId.Value)
             .AsQueryable();
 
@@ -35,6 +37,20 @@ public class TaskService : ITaskService
             // (No additional filtering needed - they can see all org tasks)
         }
         // Admins and Viewers see all organization tasks
+
+        // Filter by assignee
+        // assignedToId can be:
+        // - null/undefined: no filter (show all) unless unassignedOnly is true
+        // - >= 0: filter by specific user ID
+        // unassignedOnly: if true, only show tasks with AssignedToId == null
+        if (unassignedOnly == true)
+        {
+            query = query.Where(t => t.AssignedToId == null);
+        }
+        else if (assignedToId.HasValue && assignedToId.Value >= 0)
+        {
+            query = query.Where(t => t.AssignedToId == assignedToId.Value);
+        }
 
         // Filter by todo state ID (takes precedence over isCompleted)
         if (todoStateId.HasValue)
@@ -85,6 +101,8 @@ public class TaskService : ITaskService
 
         var task = await _context.Tasks
             .Include(t => t.TodoState)
+            .Include(t => t.AssignedTo)
+            .Include(t => t.CreatedBy)
             .FirstOrDefaultAsync(t => t.Id == id && !t.IsDeleted && t.OrganizationId == organizationId.Value);
 
         if (task == null)
@@ -120,6 +138,21 @@ public class TaskService : ITaskService
                 .FirstAsync(s => s.IsDefault && s.OrganizationId == organizationId && !s.IsDeleted);
         }
 
+        // Validate assignee if provided
+        if (createTaskDto.AssignedToId.HasValue)
+        {
+            var assignee = await _context.Users
+                .FirstOrDefaultAsync(u => u.Id == createTaskDto.AssignedToId.Value 
+                    && u.OrganizationId == organizationId 
+                    && !u.IsDeleted 
+                    && u.IsActive);
+            
+            if (assignee == null)
+            {
+                throw new InvalidOperationException($"User with ID {createTaskDto.AssignedToId.Value} not found, not in this organization, or inactive");
+            }
+        }
+
         var task = new Models.Task
         {
             Title = createTaskDto.Title,
@@ -128,6 +161,7 @@ public class TaskService : ITaskService
             Priority = (TaskPriority)createTaskDto.Priority,
             TodoStateId = state.Id,
             CreatedById = userId,
+            AssignedToId = createTaskDto.AssignedToId,
             OrganizationId = organizationId,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
@@ -137,6 +171,8 @@ public class TaskService : ITaskService
         await _context.SaveChangesAsync();
 
         await _context.Entry(task).Reference(t => t.TodoState).LoadAsync();
+        await _context.Entry(task).Reference(t => t.AssignedTo).LoadAsync();
+        await _context.Entry(task).Reference(t => t.CreatedBy).LoadAsync();
 
         _logger.LogInformation("Created task with ID {TaskId} by user {UserId} with state {StateName}", task.Id, userId, state.Name);
         return MapToDto(task);
@@ -151,6 +187,8 @@ public class TaskService : ITaskService
 
         var task = await _context.Tasks
             .Include(t => t.TodoState)
+            .Include(t => t.AssignedTo)
+            .Include(t => t.CreatedBy)
             .FirstOrDefaultAsync(t => t.Id == id && !t.IsDeleted && t.OrganizationId == organizationId.Value);
 
         if (task == null)
@@ -168,6 +206,28 @@ public class TaskService : ITaskService
         task.Description = updateTaskDto.Description;
         task.DueDate = updateTaskDto.DueDate;
         task.Priority = (TaskPriority)updateTaskDto.Priority;
+        
+        // Update assignee if provided
+        if (updateTaskDto.AssignedToId.HasValue)
+        {
+            var assignee = await _context.Users
+                .FirstOrDefaultAsync(u => u.Id == updateTaskDto.AssignedToId.Value 
+                    && u.OrganizationId == organizationId.Value 
+                    && !u.IsDeleted 
+                    && u.IsActive);
+            
+            if (assignee == null)
+            {
+                throw new InvalidOperationException($"User with ID {updateTaskDto.AssignedToId.Value} not found, not in this organization, or inactive");
+            }
+            
+            task.AssignedToId = updateTaskDto.AssignedToId.Value;
+        }
+        else if (updateTaskDto.AssignedToId == null && task.AssignedToId.HasValue)
+        {
+            // Explicitly unassign if null is provided
+            task.AssignedToId = null;
+        }
         
         // Update state if provided
         if (updateTaskDto.TodoStateId.HasValue)
@@ -200,8 +260,10 @@ public class TaskService : ITaskService
 
         await _context.SaveChangesAsync();
         
-        // Reload state for DTO mapping
+        // Reload navigation properties for DTO mapping
         await _context.Entry(task).Reference(t => t.TodoState).LoadAsync();
+        await _context.Entry(task).Reference(t => t.AssignedTo).LoadAsync();
+        await _context.Entry(task).Reference(t => t.CreatedBy).LoadAsync();
 
         _logger.LogInformation("Updated task with ID {TaskId} by user {UserId}", id, userId);
         return MapToDto(task);
@@ -216,6 +278,8 @@ public class TaskService : ITaskService
 
         var task = await _context.Tasks
             .Include(t => t.TodoState)
+            .Include(t => t.AssignedTo)
+            .Include(t => t.CreatedBy)
             .FirstOrDefaultAsync(t => t.Id == id && !t.IsDeleted && t.OrganizationId == organizationId.Value);
 
         if (task == null)
@@ -332,7 +396,12 @@ public class TaskService : ITaskService
             CreatedAt = task.CreatedAt,
             DueDate = task.DueDate,
             Priority = (TaskPriorityDto)task.Priority,
-            CompletedAt = task.CompletedAt
+            CompletedAt = task.CompletedAt,
+            AssignedToId = task.AssignedToId,
+            AssignedToName = task.AssignedTo != null ? $"{task.AssignedTo.FirstName} {task.AssignedTo.LastName}" : null,
+            AssignedToEmail = task.AssignedTo?.Email,
+            CreatedById = task.CreatedById,
+            CreatedByName = task.CreatedBy != null ? $"{task.CreatedBy.FirstName} {task.CreatedBy.LastName}" : "Unknown"
         };
     }
 }

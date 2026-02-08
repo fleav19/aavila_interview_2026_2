@@ -16,6 +16,8 @@ public class CreateTaskDto
     public TaskPriorityDto Priority { get; set; } = TaskPriorityDto.Medium;
 
     public int? TodoStateId { get; set; } // Optional - will use default state if not provided
+    
+    public int? AssignedToId { get; set; } // Optional - assign task to a user in the organization
 }
 
 public enum TaskPriorityDto

@@ -11,6 +11,11 @@ export interface Task {
   dueDate: string | null;
   priority: 0 | 1 | 2; // Low, Medium, High
   completedAt: string | null;
+  assignedToId?: number | null;
+  assignedToName?: string | null;
+  assignedToEmail?: string | null;
+  createdById: number;
+  createdByName: string;
 }
 
 export interface CreateTaskDto {
@@ -19,6 +24,7 @@ export interface CreateTaskDto {
   dueDate?: string;
   priority: 0 | 1 | 2;
   todoStateId?: number;
+  assignedToId?: number | null;
 }
 
 export interface UpdateTaskDto {
@@ -27,6 +33,7 @@ export interface UpdateTaskDto {
   dueDate?: string;
   priority: 0 | 1 | 2;
   todoStateId?: number;
+  assignedToId?: number | null;
 }
 
 export interface TaskStats {

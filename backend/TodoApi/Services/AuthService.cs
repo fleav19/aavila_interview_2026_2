@@ -187,6 +187,24 @@ public class AuthService : IAuthService
         };
     }
 
+    public async Task<IEnumerable<UserForAssignmentDto>> GetUsersForAssignmentAsync(int organizationId)
+    {
+        var users = await _context.Users
+            .Where(u => u.OrganizationId == organizationId && !u.IsDeleted && u.IsActive)
+            .OrderBy(u => u.LastName)
+            .ThenBy(u => u.FirstName)
+            .Select(u => new UserForAssignmentDto
+            {
+                Id = u.Id,
+                FirstName = u.FirstName,
+                LastName = u.LastName,
+                Email = u.Email
+            })
+            .ToListAsync();
+
+        return users;
+    }
+
     private string GenerateJwtToken(User user)
     {
         // Ensure Role is loaded

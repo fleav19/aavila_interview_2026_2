@@ -131,7 +131,7 @@ This document captures user stories organized by role to help identify functiona
 - States are ordered correctly
 - Cannot create, edit, or delete states
 
-**Status**: ❌ Not Implemented
+**Status**: ✅ Implemented (can view states in Todo States tab, read-only)
 
 ---
 
@@ -226,7 +226,7 @@ This document captures user stories organized by role to help identify functiona
 - Changes are saved with audit trail
 - Cannot edit tasks created by others (unless admin)
 
-**Status**: ⚠️ Partially Implemented (can edit, but missing: state selection, assignee selection)
+**Status**: ⚠️ Partially Implemented (can edit with state selection, but missing: assignee selection)
 
 ---
 
@@ -259,7 +259,7 @@ This document captures user stories organized by role to help identify functiona
 - Visual indication of state (color, icon)
 - Cannot change state of tasks created by others (unless admin)
 
-**Status**: ⚠️ Partially Implemented (can toggle done/active, but missing: full state selection UI)
+**Status**: ✅ Implemented (full state selection with dropdown and badges)
 
 ---
 
@@ -337,7 +337,7 @@ This document captures user stories organized by role to help identify functiona
 - Can sort by various fields
 - Filters can be combined
 
-**Status**: ⚠️ Partially Implemented (basic filtering, missing: state filter, assignee filter)
+**Status**: ⚠️ Partially Implemented (basic filtering with state filter, missing: assignee filter)
 
 ---
 
@@ -417,7 +417,7 @@ This document captures user stories organized by role to help identify functiona
 - See how many tasks are in each state
 - States are ordered correctly
 
-**Status**: ❌ Not Implemented
+**Status**: ✅ Implemented
 
 ---
 
@@ -434,7 +434,7 @@ This document captures user stories organized by role to help identify functiona
 - State is immediately available for use
 - Validation prevents duplicate names
 
-**Status**: ❌ Not Implemented
+**Status**: ✅ Implemented
 
 ---
 
@@ -451,7 +451,7 @@ This document captures user stories organized by role to help identify functiona
 - Cannot edit if it would break constraints (e.g., duplicate name)
 - Validation prevents issues
 
-**Status**: ❌ Not Implemented
+**Status**: ✅ Implemented (can edit properties and default, but reordering requires updating order field manually)
 
 ---
 
@@ -468,7 +468,7 @@ This document captures user stories organized by role to help identify functiona
 - Can restore deleted states
 - Audit trail of deletions
 
-**Status**: ❌ Not Implemented
+**Status**: ✅ Implemented (soft delete with validation preventing deletion of in-use states)
 
 ---
 
@@ -498,7 +498,7 @@ This document captures user stories organized by role to help identify functiona
 - Changing default updates the previous default state
 - New tasks automatically get default state
 
-**Status**: ⚠️ Partially Implemented (default is set in seeder, but no UI to change it)
+**Status**: ✅ Implemented (can set default state when creating/editing states)
 
 ---
 
@@ -539,28 +539,27 @@ This document captures user stories organized by role to help identify functiona
 
 ### ✅ Fully Implemented
 - Guest: Landing page, registration, login
-- Viewer: View tasks, filter/search, view stats, read-only enforcement
-- User: Create/edit/delete own tasks, view tasks, filter/search, logout, view profile
-- Admin: All user capabilities, edit/delete any task, user management (view, update roles, activate/deactivate), todo state management (CRUD)
+- Viewer: View tasks, filter/search, view stats, read-only enforcement, view todo states
+- User: Create/edit/delete own tasks, view tasks, filter/search, logout, view profile, select task state
+- Admin: All user capabilities, edit/delete any task, manage user roles, activate/deactivate users, manage todo states (CRUD)
 
 ### ⚠️ Partially Implemented
 - Viewer: Task detail view (no dedicated page)
-- User: Task editing (missing state/assignee selection), filtering (missing state/assignee filters)
-- Admin: Default state (set in seeder, no UI), statistics (basic only)
+- User: Task editing (missing assignee selection), filtering (missing assignee filter)
+- Admin: Default state (set in seeder, no UI to change it), statistics (basic only, missing: by user, by state, trends), Organization settings (no UI)
 
 ### ❌ Not Implemented
-- Viewer: View todo states
-- User: Assign tasks, view assigned tasks, filter by assignee/state
+- User: Assign tasks, view assigned tasks, filter by assignee
 - Admin: Organization settings, Advanced statistics
+- All: GraphQL API (deferred)
 
 ---
 
 ## Priority Recommendations
 
 ### High Priority (Core Functionality Gaps)
-1. **Task State Selection** (User) - US-USER-005 (full implementation)
-2. **Task Assignment** (User) - US-USER-006, US-USER-007
-3. **View Todo States** (All) - US-VIEWER-005, US-USER-010 (filter by state)
+1. **Task Assignment** (User) - US-USER-006, US-USER-007
+2. **View Todo States** (All) - US-VIEWER-005, US-USER-010 (filter by state)
 
 ### Medium Priority (Nice to Have)
 1. **Organization Settings** (Admin) - US-ADMIN-012

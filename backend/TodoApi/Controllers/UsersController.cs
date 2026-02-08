@@ -118,6 +118,24 @@ public class UsersController : ControllerBase
             return BadRequest(new { message = ex.Message });
         }
     }
+
+    /// <summary>
+    /// Get list of users in organization for task assignment (all authenticated users)
+    /// </summary>
+    [HttpGet("for-assignment")]
+    [ProducesResponseType(typeof(IEnumerable<UserForAssignmentDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<IEnumerable<UserForAssignmentDto>>> GetUsersForAssignment()
+    {
+        var organizationId = _userContext.GetCurrentOrganizationId();
+        if (organizationId == null)
+        {
+            return Unauthorized(new { message = "User organization not found" });
+        }
+
+        var users = await _authService.GetUsersForAssignmentAsync(organizationId.Value);
+        return Ok(users);
+    }
 }
 
 public class UpdateRoleDto

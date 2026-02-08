@@ -35,13 +35,15 @@ public class TasksController : ControllerBase
         [FromQuery] string? filter = null,
         [FromQuery] string? sortBy = null,
         [FromQuery] bool? isCompleted = null,
-        [FromQuery] int? todoStateId = null)
+        [FromQuery] int? todoStateId = null,
+        [FromQuery] int? assignedToId = null,
+        [FromQuery] bool? unassignedOnly = null)
     {
         var organizationId = _userContext.GetCurrentOrganizationId();
         var userId = _userContext.GetCurrentUserId();
         var userRole = _userContext.GetCurrentUserRole();
 
-        var tasks = await _taskService.GetAllTasksAsync(filter, sortBy, isCompleted, todoStateId, organizationId, userId, userRole);
+        var tasks = await _taskService.GetAllTasksAsync(filter, sortBy, isCompleted, todoStateId, assignedToId, unassignedOnly, organizationId, userId, userRole);
         return Ok(tasks);
     }
 

@@ -49,6 +49,8 @@ export const taskApi = {
     sortBy?: string;
     isCompleted?: boolean;
     todoStateId?: number;
+    assignedToId?: number;
+    unassignedOnly?: boolean;
   }): Promise<Task[]> => {
     const response = await api.get<Task[]>('/tasks', { params });
     return response.data;

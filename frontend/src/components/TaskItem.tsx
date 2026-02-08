@@ -112,12 +112,25 @@ export const TaskItem = ({ task, onEdit }: TaskItemProps) => {
             </p>
           )}
           <div className="flex items-center gap-4 mt-3 text-xs text-gray-500 dark:text-gray-400">
+            {task.assignedToName && (
+              <span className="text-blue-600 dark:text-blue-400 font-medium">
+                Assigned to: {task.assignedToName}
+              </span>
+            )}
+            {!task.assignedToName && (
+              <span className="text-gray-400 dark:text-gray-500 italic">
+                Unassigned
+              </span>
+            )}
             {task.dueDate && (
               <span className={overdue && !task.isCompleted ? 'text-red-600 dark:text-red-400 font-medium' : ''}>
                 Due: {formatDate(task.dueDate)}
                 {overdue && !task.isCompleted && ' (Overdue)'}
               </span>
             )}
+            <span className="text-gray-400 dark:text-gray-500">
+              Created by: {task.createdByName}
+            </span>
             {task.completedAt && (
               <span>Completed: {formatDate(task.completedAt)}</span>
             )}

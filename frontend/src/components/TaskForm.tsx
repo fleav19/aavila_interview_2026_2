@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useTasks } from '../contexts/TaskContext';
 import { todoStateApi } from '../services/todoStateApi';
+import { usersApi } from '../services/usersApi';
 import type { Task, CreateTaskDto, UpdateTaskDto } from '../types/task';
 import type { TodoState } from '../types/todoState';
 
@@ -18,20 +19,27 @@ export const TaskForm = ({ task, onCancel, onSubmitSuccess }: TaskFormProps) => 
   const isEditMode = !!task;
   const [states, setStates] = useState<TodoState[]>([]);
   const [loadingStates, setLoadingStates] = useState(true);
+  const [users, setUsers] = useState<Array<{ id: number; name: string }>>([]);
+  const [loadingUsers, setLoadingUsers] = useState(true);
 
-  // Load todo states
+  // Load todo states and users
   useEffect(() => {
-    const loadStates = async () => {
+    const loadData = async () => {
       try {
-        const data = await todoStateApi.getAll();
-        setStates(data.sort((a, b) => a.order - b.order));
+        const [statesData, usersData] = await Promise.all([
+          todoStateApi.getAll(),
+          usersApi.getForAssignment(), // All authenticated users can get users for assignment
+        ]);
+        setStates(statesData.sort((a, b) => a.order - b.order));
+        setUsers(usersData.map(u => ({ id: u.id, name: `${u.firstName} ${u.lastName}` })));
       } catch (err) {
-        console.error('Failed to load todo states:', err);
+        console.error('Failed to load todo states or users:', err);
       } finally {
         setLoadingStates(false);
+        setLoadingUsers(false);
       }
     };
-    loadStates();
+    loadData();
   }, []);
 
   const defaultState = states.find(s => s.isDefault);
@@ -42,7 +50,7 @@ export const TaskForm = ({ task, onCancel, onSubmitSuccess }: TaskFormProps) => 
     formState: { errors, isSubmitting },
     reset,
     watch,
-  } = useForm<FormData & { todoStateId?: number }>({
+  } = useForm<FormData & { todoStateId?: number; assignedToId?: number | null }>({
     defaultValues: task
       ? {
           title: task.title,
@@ -50,6 +58,7 @@ export const TaskForm = ({ task, onCancel, onSubmitSuccess }: TaskFormProps) => 
           dueDate: task.dueDate ? task.dueDate.split('T')[0] : '',
           priority: task.priority,
           todoStateId: task.todoStateId,
+          assignedToId: task.assignedToId || null,
         }
       : {
           title: '',
@@ -57,6 +66,7 @@ export const TaskForm = ({ task, onCancel, onSubmitSuccess }: TaskFormProps) => 
           dueDate: '',
           priority: 1,
           todoStateId: defaultState?.id,
+          assignedToId: null,
         },
   });
 
@@ -68,6 +78,7 @@ export const TaskForm = ({ task, onCancel, onSubmitSuccess }: TaskFormProps) => 
         dueDate: task.dueDate ? task.dueDate.split('T')[0] : '',
         priority: task.priority,
         todoStateId: task.todoStateId,
+        assignedToId: task.assignedToId || null,
       });
     }
   }, [task, states, reset]);
@@ -108,6 +119,11 @@ export const TaskForm = ({ task, onCancel, onSubmitSuccess }: TaskFormProps) => 
       } else if (!isEditMode && defaultState) {
         // For new tasks, use default state if none selected
         taskData.todoStateId = defaultState.id;
+      }
+
+      // Add assignee if provided
+      if (data.assignedToId !== undefined) {
+        taskData.assignedToId = data.assignedToId || null;
       }
 
       if (isEditMode && task) {
@@ -162,7 +178,7 @@ export const TaskForm = ({ task, onCancel, onSubmitSuccess }: TaskFormProps) => 
           )}
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               State
@@ -179,6 +195,31 @@ export const TaskForm = ({ task, onCancel, onSubmitSuccess }: TaskFormProps) => 
                 {states.map((state) => (
                   <option key={state.id} value={state.id}>
                     {state.displayName}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Assignee
+            </label>
+            {loadingUsers ? (
+              <div className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white">
+                Loading users...
+              </div>
+            ) : (
+              <select
+                {...register('assignedToId', { 
+                  setValueAs: (value) => value === '' || value === 'none' ? null : Number(value)
+                })}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="none">Unassigned</option>
+                {users.map((user) => (
+                  <option key={user.id} value={user.id}>
+                    {user.name}
                   </option>
                 ))}
               </select>

@@ -16,5 +16,7 @@ public class UpdateTaskDto
     public TaskPriorityDto Priority { get; set; } = TaskPriorityDto.Medium;
 
     public int? TodoStateId { get; set; } // Optional - will keep current state if not provided
+    
+    public int? AssignedToId { get; set; } // Optional - assign or reassign task to a user
 }
 

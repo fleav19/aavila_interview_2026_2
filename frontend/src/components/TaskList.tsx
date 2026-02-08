@@ -13,13 +13,17 @@ export const TaskList = () => {
   const [sortBy, setSortBy] = useState('created');
   const [isCompleted, setIsCompleted] = useState<boolean | undefined>(undefined);
   const [todoStateId, setTodoStateId] = useState<number | undefined>(undefined);
+  const [assignedToId, setAssignedToId] = useState<number | undefined>(undefined);
   const [showForm, setShowForm] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | undefined>(undefined);
 
   useEffect(() => {
-    fetchTasks(filter || undefined, sortBy, isCompleted, todoStateId);
+    // Handle special case: -1 means unassigned
+    const assigneeFilter = assignedToId === -1 ? undefined : assignedToId;
+    const unassignedOnly = assignedToId === -1 ? true : undefined;
+    fetchTasks(filter || undefined, sortBy, isCompleted, todoStateId, assigneeFilter, unassignedOnly);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filter, sortBy, isCompleted, todoStateId]);
+  }, [filter, sortBy, isCompleted, todoStateId, assignedToId]);
 
   const handleEdit = (task: Task) => {
     setEditingTask(task);
@@ -67,10 +71,12 @@ export const TaskList = () => {
             sortBy={sortBy}
             isCompleted={isCompleted}
             todoStateId={todoStateId}
+            assignedToId={assignedToId}
             onFilterChange={setFilter}
             onSortChange={setSortBy}
             onStatusChange={setIsCompleted}
             onStateChange={setTodoStateId}
+            onAssigneeChange={setAssignedToId}
           />
 
           {loading && <LoadingSpinner message="Refreshing..." />}

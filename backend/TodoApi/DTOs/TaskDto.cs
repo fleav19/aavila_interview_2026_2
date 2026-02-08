@@ -14,5 +14,14 @@ public class TaskDto
     public DateTime? DueDate { get; set; }
     public TaskPriorityDto Priority { get; set; }
     public DateTime? CompletedAt { get; set; }
+    
+    // Assignee information
+    public int? AssignedToId { get; set; }
+    public string? AssignedToName { get; set; }
+    public string? AssignedToEmail { get; set; }
+    
+    // Creator information
+    public int CreatedById { get; set; }
+    public string CreatedByName { get; set; } = string.Empty;
 }
 
