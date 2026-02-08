@@ -89,6 +89,35 @@ public static class DataSeeder
                             LogDebug("DataSeeder.cs:75", "Users table missing Preferences column, needs recreation", new { existingColumns = columns.ToArray() }, "A,B,C");
                         }
                     }
+                    
+                    // Check if Tasks table has required columns (ParentTaskId, ProjectId)
+                    if (existingTables.Contains("Tasks", StringComparer.OrdinalIgnoreCase))
+                    {
+                        var tasksColumnsCommand = connection.CreateCommand();
+                        tasksColumnsCommand.CommandText = "PRAGMA table_info(Tasks)";
+                        var tasksColumns = new List<string>();
+                        using (var reader = await tasksColumnsCommand.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                tasksColumns.Add(reader.GetString(1)); // Column name is at index 1
+                            }
+                        }
+                        var missingTasksColumns = new List<string>();
+                        if (!tasksColumns.Contains("ParentTaskId", StringComparer.OrdinalIgnoreCase))
+                        {
+                            missingTasksColumns.Add("ParentTaskId");
+                        }
+                        if (!tasksColumns.Contains("ProjectId", StringComparer.OrdinalIgnoreCase))
+                        {
+                            missingTasksColumns.Add("ProjectId");
+                        }
+                        if (missingTasksColumns.Count > 0)
+                        {
+                            needsRecreation = true;
+                            LogDebug("DataSeeder.cs:100", "Tasks table missing columns, needs recreation", new { missingColumns = missingTasksColumns.ToArray(), existingColumns = tasksColumns.ToArray() }, "A,B,C");
+                        }
+                    }
                 }
                 await connection.CloseAsync();
             }

@@ -16,7 +16,7 @@ public class TaskService : ITaskService
         _logger = logger;
     }
 
-    public async Task<IEnumerable<TaskDto>> GetAllTasksAsync(string? filter, string? sortBy, bool? isCompleted, int? todoStateId, int? assignedToId, bool? unassignedOnly, int? organizationId, int? userId, string? userRole)
+    public async Task<IEnumerable<TaskDto>> GetAllTasksAsync(string? filter, string? sortBy, bool? isCompleted, int? todoStateId, int? assignedToId, bool? unassignedOnly, int? projectId, int? organizationId, int? userId, string? userRole)
     {
         if (organizationId == null)
         {
@@ -28,7 +28,9 @@ public class TaskService : ITaskService
             .Include(t => t.AssignedTo)
             .Include(t => t.CreatedBy)
             .Include(t => t.UpdatedBy)
-            .Where(t => !t.IsDeleted && t.OrganizationId == organizationId.Value)
+            .Include(t => t.Project)
+            .Include(t => t.ParentTask)
+            .Where(t => !t.IsDeleted && t.OrganizationId == organizationId.Value && t.ParentTaskId == null) // Only top-level tasks (not subtasks)
             .AsQueryable();
 
         // Role-based filtering: Users see own tasks + org tasks, Viewers see all org tasks (read-only enforced at controller)
@@ -51,6 +53,12 @@ public class TaskService : ITaskService
         else if (assignedToId.HasValue && assignedToId.Value >= 0)
         {
             query = query.Where(t => t.AssignedToId == assignedToId.Value);
+        }
+
+        // Filter by project
+        if (projectId.HasValue)
+        {
+            query = query.Where(t => t.ProjectId == projectId.Value);
         }
 
         // Filter by todo state ID (takes precedence over isCompleted)
@@ -90,7 +98,7 @@ public class TaskService : ITaskService
         };
 
         var tasks = await query.ToListAsync();
-        return tasks.Select(MapToDto);
+        return tasks.Select(t => MapToDto(t));
     }
 
     public async Task<TaskDto?> GetTaskByIdAsync(int id, int? organizationId, int? userId, string? userRole)
@@ -105,6 +113,12 @@ public class TaskService : ITaskService
             .Include(t => t.AssignedTo)
             .Include(t => t.CreatedBy)
             .Include(t => t.UpdatedBy)
+            .Include(t => t.Project)
+            .Include(t => t.ParentTask)
+            .Include(t => t.Subtasks)
+                .ThenInclude(s => s.TodoState)
+            .Include(t => t.Subtasks)
+                .ThenInclude(s => s.AssignedTo)
             .FirstOrDefaultAsync(t => t.Id == id && !t.IsDeleted && t.OrganizationId == organizationId.Value);
 
         if (task == null)
@@ -114,13 +128,13 @@ public class TaskService : ITaskService
 
         // Check permissions: Users can read own tasks and org tasks, Admins/Viewers can read all org tasks
         // (Read permission is already checked by organization filter above)
-        return MapToDto(task);
+        return MapToDto(task, includeSubtasks: true);
     }
 
     public async Task<TaskDto> CreateTaskAsync(CreateTaskDto createTaskDto, int userId, int organizationId)
     {
         // Get state - use provided state or default state
-        TodoState state;
+        TodoState? state;
         if (createTaskDto.TodoStateId.HasValue)
         {
             state = await _context.TodoStates
@@ -155,6 +169,40 @@ public class TaskService : ITaskService
             }
         }
 
+        // Validate project if provided
+        if (createTaskDto.ProjectId.HasValue)
+        {
+            var project = await _context.Projects
+                .FirstOrDefaultAsync(p => p.Id == createTaskDto.ProjectId.Value 
+                    && p.OrganizationId == organizationId 
+                    && !p.IsDeleted);
+            
+            if (project == null)
+            {
+                throw new InvalidOperationException($"Project with ID {createTaskDto.ProjectId.Value} not found or not accessible");
+            }
+        }
+
+        // Validate parent task if provided (for subtasks)
+        if (createTaskDto.ParentTaskId.HasValue)
+        {
+            var parentTask = await _context.Tasks
+                .FirstOrDefaultAsync(t => t.Id == createTaskDto.ParentTaskId.Value 
+                    && t.OrganizationId == organizationId 
+                    && !t.IsDeleted);
+            
+            if (parentTask == null)
+            {
+                throw new InvalidOperationException($"Parent task with ID {createTaskDto.ParentTaskId.Value} not found or not accessible");
+            }
+
+            // If creating a subtask, inherit project from parent if not specified
+            if (!createTaskDto.ProjectId.HasValue && parentTask.ProjectId.HasValue)
+            {
+                createTaskDto.ProjectId = parentTask.ProjectId;
+            }
+        }
+
         var task = new Models.Task
         {
             Title = createTaskDto.Title,
@@ -164,6 +212,8 @@ public class TaskService : ITaskService
             TodoStateId = state.Id,
             CreatedById = userId,
             AssignedToId = createTaskDto.AssignedToId,
+            ProjectId = createTaskDto.ProjectId,
+            ParentTaskId = createTaskDto.ParentTaskId,
             OrganizationId = organizationId,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
@@ -176,6 +226,8 @@ public class TaskService : ITaskService
         await _context.Entry(task).Reference(t => t.AssignedTo).LoadAsync();
         await _context.Entry(task).Reference(t => t.CreatedBy).LoadAsync();
         await _context.Entry(task).Reference(t => t.UpdatedBy).LoadAsync();
+        await _context.Entry(task).Reference(t => t.Project).LoadAsync();
+        await _context.Entry(task).Reference(t => t.ParentTask).LoadAsync();
 
         _logger.LogInformation("Created task with ID {TaskId} by user {UserId} with state {StateName}", task.Id, userId, state.Name);
         return MapToDto(task);
@@ -231,6 +283,60 @@ public class TaskService : ITaskService
         {
             // Explicitly unassign if null is provided
             task.AssignedToId = null;
+        }
+
+        // Update project if provided
+        if (updateTaskDto.ProjectId.HasValue)
+        {
+            var project = await _context.Projects
+                .FirstOrDefaultAsync(p => p.Id == updateTaskDto.ProjectId.Value 
+                    && p.OrganizationId == organizationId.Value 
+                    && !p.IsDeleted);
+            
+            if (project == null)
+            {
+                throw new InvalidOperationException($"Project with ID {updateTaskDto.ProjectId.Value} not found or not accessible");
+            }
+            
+            task.ProjectId = updateTaskDto.ProjectId.Value;
+        }
+        else if (updateTaskDto.ProjectId == null && task.ProjectId.HasValue)
+        {
+            // Explicitly remove from project if null is provided
+            task.ProjectId = null;
+        }
+
+        // Update parent task if provided (for subtasks)
+        if (updateTaskDto.ParentTaskId.HasValue)
+        {
+            var parentTask = await _context.Tasks
+                .FirstOrDefaultAsync(t => t.Id == updateTaskDto.ParentTaskId.Value 
+                    && t.OrganizationId == organizationId.Value 
+                    && !t.IsDeleted);
+            
+            if (parentTask == null)
+            {
+                throw new InvalidOperationException($"Parent task with ID {updateTaskDto.ParentTaskId.Value} not found or not accessible");
+            }
+
+            // Prevent circular references
+            if (parentTask.Id == task.Id)
+            {
+                throw new InvalidOperationException("A task cannot be its own parent");
+            }
+
+            // If making this a subtask, inherit project from parent if not specified
+            if (!updateTaskDto.ProjectId.HasValue && parentTask.ProjectId.HasValue)
+            {
+                task.ProjectId = parentTask.ProjectId;
+            }
+            
+            task.ParentTaskId = updateTaskDto.ParentTaskId.Value;
+        }
+        else if (updateTaskDto.ParentTaskId == null && task.ParentTaskId.HasValue)
+        {
+            // Explicitly remove parent if null is provided (make it a top-level task)
+            task.ParentTaskId = null;
         }
         
         // Update state if provided
@@ -385,11 +491,11 @@ public class TaskService : ITaskService
         };
     }
 
-    private static TaskDto MapToDto(Models.Task task)
+    private static TaskDto MapToDto(Models.Task task, bool includeSubtasks = false)
     {
         // Map TodoState to IsCompleted for backward compatibility
         var isCompleted = task.TodoState?.Name.ToLower() == "done";
-        return new TaskDto
+        var dto = new TaskDto
         {
             Id = task.Id,
             Title = task.Title,
@@ -410,8 +516,23 @@ public class TaskService : ITaskService
             CreatedById = task.CreatedById,
             CreatedByName = task.CreatedBy != null ? $"{task.CreatedBy.FirstName} {task.CreatedBy.LastName}" : "Unknown",
             UpdatedById = task.UpdatedById,
-            UpdatedByName = task.UpdatedBy != null ? $"{task.UpdatedBy.FirstName} {task.UpdatedBy.LastName}" : null
+            UpdatedByName = task.UpdatedBy != null ? $"{task.UpdatedBy.FirstName} {task.UpdatedBy.LastName}" : null,
+            ProjectId = task.ProjectId,
+            ProjectName = task.Project?.Name,
+            ParentTaskId = task.ParentTaskId,
+            ParentTaskTitle = task.ParentTask?.Title
         };
+
+        // Include subtasks if requested
+        if (includeSubtasks && task.Subtasks != null)
+        {
+            dto.Subtasks = task.Subtasks
+                .Where(s => !s.IsDeleted)
+                .Select(s => MapToDto(s, includeSubtasks: false))
+                .ToList();
+        }
+
+        return dto;
     }
 }
 

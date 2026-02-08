@@ -16,7 +16,8 @@ builder.Services.AddControllers()
         // Configure JSON serialization
         options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
         options.JsonSerializerOptions.WriteIndented = true;
-        // Enums are serialized as numbers by default (0, 1, 2) which matches frontend
+        // Enums are serialized/deserialized as numbers by default (0, 1, 2) which matches frontend
+        // System.Text.Json handles number-to-enum conversion automatically - no converter needed
     });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -62,6 +63,7 @@ builder.Services.AddDbContext<TodoDbContext>(options =>
 builder.Services.AddScoped<ITaskService, TaskService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ITodoStateService, TodoStateService>();
+builder.Services.AddScoped<IProjectService, ProjectService>();
 builder.Services.AddScoped<IUserManagementService, UserManagementService>();
 builder.Services.AddScoped<IUserPreferencesService, UserPreferencesService>();
 builder.Services.AddScoped<IOrganizationService, OrganizationService>();

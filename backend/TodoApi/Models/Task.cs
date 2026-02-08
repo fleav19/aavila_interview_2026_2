@@ -8,6 +8,8 @@ public class Task
     public int TodoStateId { get; set; }
     public int CreatedById { get; set; }
     public int? AssignedToId { get; set; }
+    public int? ProjectId { get; set; }
+    public int? ParentTaskId { get; set; }
     public int OrganizationId { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
@@ -26,6 +28,9 @@ public class Task
     public User? UpdatedBy { get; set; }
     public User? DeletedBy { get; set; }
     public Organization Organization { get; set; } = null!;
+    public Project? Project { get; set; }
+    public Models.Task? ParentTask { get; set; }
+    public ICollection<Models.Task> Subtasks { get; set; } = new List<Models.Task>();
 }
 
 public enum TaskPriority

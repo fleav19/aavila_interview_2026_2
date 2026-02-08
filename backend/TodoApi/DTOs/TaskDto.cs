@@ -28,5 +28,14 @@ public class TaskDto
     public DateTime UpdatedAt { get; set; }
     public int? UpdatedById { get; set; }
     public string? UpdatedByName { get; set; }
+    
+    // Project information
+    public int? ProjectId { get; set; }
+    public string? ProjectName { get; set; }
+    
+    // Subtask information
+    public int? ParentTaskId { get; set; }
+    public string? ParentTaskTitle { get; set; }
+    public List<TaskDto> Subtasks { get; set; } = new List<TaskDto>();
 }
 

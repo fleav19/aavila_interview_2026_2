@@ -19,6 +19,11 @@ export interface Task {
   updatedAt: string;
   updatedById?: number | null;
   updatedByName?: string | null;
+  projectId?: number | null;
+  projectName?: string | null;
+  parentTaskId?: number | null;
+  parentTaskTitle?: string | null;
+  subtasks?: Task[];
 }
 
 export interface CreateTaskDto {
@@ -28,6 +33,8 @@ export interface CreateTaskDto {
   priority: 0 | 1 | 2;
   todoStateId?: number;
   assignedToId?: number | null;
+  projectId?: number | null;
+  parentTaskId?: number | null;
 }
 
 export interface UpdateTaskDto {
@@ -37,6 +44,8 @@ export interface UpdateTaskDto {
   priority: 0 | 1 | 2;
   todoStateId?: number;
   assignedToId?: number | null;
+  projectId?: number | null;
+  parentTaskId?: number | null;
 }
 
 export interface TaskStats {
