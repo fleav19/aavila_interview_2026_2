@@ -56,11 +56,30 @@ public class AuthService : IAuthService
             await _context.SaveChangesAsync();
         }
 
-        // Get default role (User)
-        var userRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "User");
-        if (userRole == null)
+        // Check if this is the first user for the organization
+        var existingUserCount = await _context.Users
+            .CountAsync(u => u.OrganizationId == organization.Id && !u.IsDeleted);
+
+        // Get role: Admin for first user, User for subsequent users
+        Role role;
+        if (existingUserCount == 0)
         {
-            throw new InvalidOperationException("Default User role not found. Please seed the database.");
+            // First user in organization gets Admin role
+            role = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "Admin");
+            if (role == null)
+            {
+                throw new InvalidOperationException("Admin role not found. Please seed the database.");
+            }
+            _logger.LogInformation("First user for organization {OrgId} ({OrgName}) - assigning Admin role", organization.Id, organization.Name);
+        }
+        else
+        {
+            // Subsequent users get User role
+            role = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "User");
+            if (role == null)
+            {
+                throw new InvalidOperationException("Default User role not found. Please seed the database.");
+            }
         }
 
         // Hash password
@@ -74,7 +93,7 @@ public class AuthService : IAuthService
             FirstName = registerDto.FirstName,
             LastName = registerDto.LastName,
             OrganizationId = organization.Id,
-            RoleId = userRole.Id,
+            RoleId = role.Id,
             IsActive = true,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
